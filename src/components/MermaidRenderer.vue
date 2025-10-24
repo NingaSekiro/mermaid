@@ -1,23 +1,14 @@
 <template>
-  <div class="mermaid-renderer">
-    <h2 class="title">Mermaid图表实时渲染</h2>
-    <div class="editor-section">
-      <h3>输入Mermaid代码</h3>
-      <a-textarea
-        v-model:value="mermaidCode"
-        placeholder="在此输入Mermaid图表代码"
-        :auto-size="{ minRows: 8, maxRows: 12 }"
-      />
-    </div>
-    <div class="preview-section">
-      <h3>预览</h3>
-      <div class="preview-container">
-        <div v-if="error" class="error-message">{{ error }}</div>
+        <div v-if="error" class="error-message">
+          <a-alert type="error">
+            <template #message>
+              <div style="white-space: pre-wrap;">{{ mermaidCode }}</div>
+            </template>
+          </a-alert>
+          {{ error }}
+        </div>
         <div v-else-if="mermaidCode" v-html="mermaidSvg" class="mermaid-container"></div>
         <div v-else class="placeholder">图表将在这里显示</div>
-      </div>
-    </div>
-  </div>
 </template>
 
 <script setup>
@@ -51,10 +42,10 @@ const generateMermaidFromMethods = (methodCalls) => {
     // 根据是否为入参调用确定箭头方向和样式
     if (call.isInboundCall) {
       // 入参调用：使用实线箭头
-      code += `    ${lastComponent}->>${simpleClassName}: ${methodName}\n`
+      code += `    ${lastComponent}->>+${simpleClassName}: ${methodName}\n`
     } else {
       // 非入参调用（返回）：使用虚线箭头
-      code += `    ${lastComponent}-->>${simpleClassName}: ${methodName}\n`
+      code += `    ${lastComponent}-->>-${simpleClassName}: return\n`
     }
     lastComponent = simpleClassName
   })
@@ -69,11 +60,19 @@ const exampleMethodCalls = [
     isInboundCall: true
   },
   {
-    methodName: 'public void com.example.demo.controller.DemoController.middle(java.lang.Integer)',
+    methodName: 'public com.example.demo.controller.Model com.example.demo.controller.DemoController1.middle(java.lang.Integer)',
     isInboundCall: true
   },
   {
-    methodName: 'public void com.example.demo.controller.DemoController.middle(java.lang.Integer)',
+    methodName: 'public com.example.demo.controller.Model com.example.demo.controller.DemoController1.middle(java.lang.Integer)',
+    isInboundCall: false
+  },
+  {
+    methodName: 'public void com.example.demo.controller.DemoController.middlec(java.lang.Integer)',
+    isInboundCall: true
+  },
+  {
+    methodName: 'public void com.example.demo.controller.DemoController.middlec(java.lang.Integer)',
     isInboundCall: false
   },
   {
@@ -137,20 +136,6 @@ const updateGraph = async () => {
   max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
-}
-
-.title {
-  text-align: center;
-  margin-bottom: 30px;
-  color: #1a1a1a;
-}
-
-.editor-section,
-.preview-section {
-  background-color: #fafafa;
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 h3 {
