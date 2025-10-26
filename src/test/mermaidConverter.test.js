@@ -14,28 +14,28 @@ test('simplifyMethod', () => {
 test('convertToMermaid', () => {
   const exampleMethodCalls = [
     {
-      methodName: 'public void com.example.demo.controller.DemoController.testScheduled5()',
-      isInboundCall: true
+      method: 'public void com.example.demo.controller.DemoController.testScheduled5()',
+      inboundCall: true
     },
     {
-      methodName: 'public com.example.demo.controller.Model com.example.demo.controller.DemoController1.middle(java.lang.Integer)',
-      isInboundCall: true
+      method: 'public com.example.demo.controller.Model com.example.demo.controller.DemoController1.middle(java.lang.Integer)',
+      inboundCall: true
     },
     {
-      methodName: 'public com.example.demo.controller.Model com.example.demo.controller.DemoController1.middle(java.lang.Integer)',
-      isInboundCall: false
+      method: 'public com.example.demo.controller.Model com.example.demo.controller.DemoController1.middle(java.lang.Integer)',
+      inboundCall: false
     },
     {
-      methodName: 'public void com.example.demo.controller.DemoController.middlec(java.lang.Integer)',
-      isInboundCall: true
+      method: 'public void com.example.demo.controller.DemoController.middlec(java.lang.Integer)',
+      inboundCall: true
     },
     {
-      methodName: 'public void com.example.demo.controller.DemoController.middlec(java.lang.Integer)',
-      isInboundCall: false
+      method: 'public void com.example.demo.controller.DemoController.middlec(java.lang.Integer)',
+      inboundCall: false
     },
     {
-      methodName: 'public void com.example.demo.controller.DemoController.testScheduled5()',
-      isInboundCall: false
+      method: 'public void com.example.demo.controller.DemoController.testScheduled5()',
+      inboundCall: false
     }
   ]
   console.log(convertToMermaid(exampleMethodCalls))
@@ -44,12 +44,12 @@ test('convertToMermaid', () => {
 test('convertToMermaid2', () => {
   const exampleMethodCalls = [
     {
-      methodName: 'public void com.example.demo.controller.DemoController.testScheduled5()',
-      isInboundCall: true
+      method: 'public void com.example.demo.controller.DemoController.testScheduled5()',
+      inboundCall: true
     },
     {
-      methodName: 'public void com.example.demo.controller.DemoController.testScheduled5()',
-      isInboundCall: false
+      method: 'public void com.example.demo.controller.DemoController.testScheduled5()',
+      inboundCall: false
     }
   ]
   console.log(convertToMermaid(exampleMethodCalls))

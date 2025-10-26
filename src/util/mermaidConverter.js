@@ -14,19 +14,18 @@ export function convertToMermaid(methodCalls) {
   callStack.push('Thread')
 
   let methodCall = ''
-  // 处理每个方法调用
   methodCalls.forEach((call) => {
-    const { permission, returnSimpleClassName, simpleTargetClassName, methodDesc } = simplifyMethod(call.methodName)
+    const { permission, returnSimpleClassName, simpleTargetClassName, methodName } = simplifyMethod(call.method)
     const caller = callStack.peek()
     participants.add(simpleTargetClassName)
-    if (call.isInboundCall) {
+    if (call.inboundCall) {
       if (caller === simpleTargetClassName) {
         // 同一类的调用，不激活和去激活
-        methodCall += `    ${caller}->>${simpleTargetClassName}: ${methodDesc}\n`
+        methodCall += `    ${caller}->>${simpleTargetClassName}: ${methodName}\n`
         callStack.push(simpleTargetClassName)
       } else {
         // 不同类的调用，激活目标类
-        methodCall += `    ${caller}->>+${simpleTargetClassName}: ${methodDesc}\n`
+        methodCall += `    ${caller}->>+${simpleTargetClassName}: ${methodName}\n`
         callStack.push(simpleTargetClassName)
       }
     } else {
@@ -55,9 +54,12 @@ export function simplifyMethod(fullMethod) {
   const permission = fullMethod.split(' ')[0]
   const returnSimpleClassName = fullMethod.split(' ')[1].substring(fullMethod.split(' ')[1].lastIndexOf('.') + 1)
   const simpleTargetClassName = fullMethod.split(' ')[2].split('(')[0].split('.').slice(-2)[0]
+  const methodName = fullMethod.split(' ')[2].split('(')[0].split('.').slice(-1)[0] + '()'
   const regex = /(\w+\([^)]*\))$/
+  // middle(java.lang.Integer)
   const methodDescription = fullMethod.match(regex)[1]
+  //  middle(Integer)
   const methodDesc = methodDescription.replace(/[\w$.]+/g, m => m.includes('.') ? m.substring(m.lastIndexOf('.') + 1) : m)
-  return { permission, returnSimpleClassName, simpleTargetClassName, methodDesc }
+  return { permission, returnSimpleClassName, simpleTargetClassName, methodName }
 }
 
