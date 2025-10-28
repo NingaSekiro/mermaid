@@ -53,12 +53,12 @@ mermaid.initialize({
   themeVariables: tmpThemeVariables
 })
 
-watchEffect(
-  () => {
-    updateGraph()
-  },
-  { flush: 'post' }
-)
+// watchEffect(
+//   () => {
+//     updateGraph()
+//   },
+//   { flush: 'post' }
+// )
 
 onMounted(() => {
   updateSequenceDiagram()
