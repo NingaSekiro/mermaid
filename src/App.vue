@@ -1,11 +1,10 @@
 <template>
   <div class="app">
-    <MermaidRenderer />
+    <router-view />
   </div>
 </template>
 
 <script setup>
-import MermaidRenderer from './components/MermaidRenderer.vue'
 </script>
 
 <style scoped></style>

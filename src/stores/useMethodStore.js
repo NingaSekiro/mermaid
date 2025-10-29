@@ -1,13 +1,25 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { mockActiveMethods } from '@/test/testdata.js'
-import { mermaidAPI } from '@/apis/method.js'
+import { getMethodChainsAPI, getMethodRecordsAPI, mermaidAPI } from '@/apis/method.js'
 
 export const useMethodStore = defineStore('method', () => {
-  const methods = ref(mockActiveMethods)
-  const getMethods = async () => {
-    const res = await mermaidAPI()
-    methods.value = JSON.parse(res.data)
+  const methodRecords = ref([])
+  const getMethodRecords = async () => {
+    const res = await getMethodRecordsAPI()
+    methodRecords.value = res.data
   }
-  return { methods, getMethods }
+
+  const methodChains = ref([])
+  const getMethodChains = async (record) => {
+    const res = await getMethodChainsAPI(record)
+    methodChains.value = res.data
+  }
+
+  const mermaidCode = ref('')
+  const getMermaidCode = async (methodChain) => {
+    const res = await mermaidAPI(methodChain)
+    mermaidCode.value = res.data.mermaidCode
+  }
+
+  return { mermaidCode, getMermaidCode, methodRecords, getMethodRecords, methodChains, getMethodChains }
 })

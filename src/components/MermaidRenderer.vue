@@ -1,5 +1,4 @@
 <template>
-  <a-button type="primary" @click="updateSequenceDiagram">更新图表</a-button>
   <div v-if="error" class="error-message">
     <a-alert type="error">
       <template #message>
@@ -13,16 +12,22 @@
 </template>
 
 <script setup>
-import { nextTick, onMounted, ref, watchEffect } from 'vue'
+import { nextTick, ref, watch } from 'vue'
 import mermaid from 'mermaid'
-import { convertToMermaid } from '@/util/mermaidConverter.js'
-import { useMethodStore } from '@/stores/useMethodStore.js'
+
+// 定义 props
+const props = defineProps({
+  mermaidCode: {
+    type: String,
+    default: ''
+  }
+})
 
 // 组件状态
-const mermaidCode = ref('')
 const mermaidSvg = ref('')
 const error = ref('')
-const methodStore = useMethodStore()
+
+// 初始化 mermaid 配置（保持不变）
 let tmpThemeVariables = {
   darkMode: true,
   background: '#2b2b2b',
@@ -33,7 +38,7 @@ let tmpThemeVariables = {
   activationBkgColor: '#373b39',
   actorBorder: '#373b39'
 }
-// 配置mermaid默认设置
+
 mermaid.initialize({
   'startOnLoad': true,
   'maxTextSize': 500000,
@@ -52,31 +57,20 @@ mermaid.initialize({
   theme: 'base',
   themeVariables: tmpThemeVariables
 })
-
-// watchEffect(
-//   () => {
-//     updateGraph()
-//   },
-//   { flush: 'post' }
-// )
-
-onMounted(() => {
-  updateSequenceDiagram()
-})
-
-const updateSequenceDiagram = () => {
-  methodStore.getMethods()
-  updateGraph()
-}
-
-
 // 更新图表
 const updateGraph = async () => {
   try {
-    mermaidCode.value = convertToMermaid(methodStore.methods)
-    const { svg } = await mermaid.render('graphDiv', mermaidCode.value)
+    if (!props.mermaidCode) {
+      mermaidSvg.value = ''
+      error.value = ''
+      return
+    }
+
+    console.log('start update')
+    const { svg } = await mermaid.render('graphDiv', props.mermaidCode)
     mermaidSvg.value = svg
     error.value = ''
+
     await nextTick(() => {
       // 自定义点击事件（例如时序图中的 actor）
       const actors = document.querySelectorAll('.actor')
@@ -99,6 +93,12 @@ const updateGraph = async () => {
     error.value = err.message || '渲染失败'
   }
 }
+// 监听 mermaidCode 变化并重新渲染
+watch(() => props.mermaidCode, () => {
+  updateGraph()
+}, { immediate: true })
+
+
 </script>
 
 

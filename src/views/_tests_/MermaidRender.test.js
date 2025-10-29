@@ -2,7 +2,7 @@
 import { mount } from '@vue/test-utils'
 import { describe, it, expect, vi } from 'vitest'
 import { createTestingPinia } from '@pinia/testing'
-import MermaidRenderer from '../MermaidRenderer.vue'
+import MermaidRenderer from '../../components/MermaidRenderer.vue'
 import { useMethodStore } from '@/stores/useMethodStore'
 import { mockMethods } from '@/test/testdata.js'
 
