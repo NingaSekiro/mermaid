@@ -7,6 +7,10 @@ const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
+      path: '/',
+      redirect: '/home'  // 默认路径重定向到 /home
+    },
+    {
       path: '/mermaid',
       component: MermaidRenderer
     },

@@ -1,17 +1,20 @@
 <template>
-  <a-collapse v-model:activeKey="activeKey" accordion>
+  <a-collapse v-model:activeKey="activeOutKey" accordion>
     <a-collapse-panel
       v-for="(record, index) in methodStore.methodRecords"
       :key="index"
       :header="record"
       @click="updateMethodChains(record)">
-      <a-collapse>
+      <a-collapse v-model:activeKey="activeInKey" accordion>
         <a-collapse-panel
           v-for="(item, itemIndex) in methodStore.methodChains"
           :key="itemIndex"
           :header="item.methodChain"
           @click.stop="updateMermaidCode(item)">
-            <MermaidRenderer :mermaid-code="myMermaidCode" />
+          <p>{{ item.methodChain }}</p>
+            <MermaidRenderer
+              :mermaid-code="methodStore.mermaidCode"
+            />
         </a-collapse-panel>
       </a-collapse>
     </a-collapse-panel>
@@ -22,15 +25,14 @@ import { onMounted, ref } from 'vue'
 import { useMethodStore } from '@/stores/useMethodStore.js'
 import MermaidRenderer from '@/components/MermaidRenderer.vue'
 
-const activeKey = ref([])
+const activeOutKey = ref([])
+const activeInKey = ref([])
 const methodStore = useMethodStore()
 
 onMounted(() => {
   updateMethodRecords()
 })
-const myMermaidCode = ref(`sequenceDiagram
-    Alice->>John: Hello John, how are you?
-    John-->>Alice: Great!`)
+
 const updateMethodRecords = async () => {
   await methodStore.getMethodRecords()
 }
