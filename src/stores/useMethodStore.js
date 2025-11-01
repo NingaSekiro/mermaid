@@ -1,6 +1,11 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { getMethodChainsAPI, getMethodRecordsAPI, mermaidAPI } from '@/apis/method.js'
+import {
+  getMethodChainsAPI,
+  getMethodRecordsAPI,
+  getPackageNamesAPI,
+  mermaidAPI,
+} from '@/apis/method.js'
 
 export const useMethodStore = defineStore('method', () => {
   const methodRecords = ref([])
@@ -21,5 +26,20 @@ export const useMethodStore = defineStore('method', () => {
     mermaidCode.value = res.data.mermaidCode
   }
 
-  return { mermaidCode, getMermaidCode, methodRecords, getMethodRecords, methodChains, getMethodChains }
+  const packageNames = ref([])
+  const getPackageNames = async () => {
+    const res = await getPackageNamesAPI()
+    packageNames.value = res.data
+  }
+
+  return {
+    mermaidCode,
+    getMermaidCode,
+    methodRecords,
+    getMethodRecords,
+    methodChains,
+    getMethodChains,
+    packageNames,
+    getPackageNames,
+  }
 })

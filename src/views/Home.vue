@@ -1,20 +1,21 @@
 <template>
-  <a-collapse v-model:activeKey="activeOutKey" accordion>
+  <a-collapse v-model:activeKey="activeOutKey" @change="updateMethodChains(activeOutKey)" accordion>
     <a-collapse-panel
       v-for="(record, index) in methodStore.methodRecords"
       :key="index"
       :header="record"
-      @click="updateMethodChains(record)">
-      <a-collapse v-model:activeKey="activeInKey" accordion>
+    >
+      <a-collapse
+        v-model:activeKey="activeInKey"
+        @change="updateMermaidCode(activeInKey)"
+        accordion
+      >
         <a-collapse-panel
           v-for="(item, itemIndex) in methodStore.methodChains"
           :key="itemIndex"
           :header="item.methodChain"
-          @click.stop="updateMermaidCode(item)">
-          <p>{{ item.methodChain }}</p>
-            <MermaidRenderer
-              :mermaid-code="methodStore.mermaidCode"
-            />
+        >
+          <MermaidRenderer :mermaid-code="methodStore.mermaidCode" />
         </a-collapse-panel>
       </a-collapse>
     </a-collapse-panel>
@@ -37,17 +38,19 @@ const updateMethodRecords = async () => {
   await methodStore.getMethodRecords()
 }
 
-const updateMethodChains = async (record) => {
-  await methodStore.getMethodChains(record)
+const updateMethodChains = async (item) => {
+  if (item === undefined) {
+    return
+  }
+  await methodStore.getMethodChains(methodStore.methodRecords[item])
 }
 
-
 const updateMermaidCode = async (item) => {
-  await methodStore.getMermaidCode(item.methodChain)
+  if (item === undefined) {
+    return
+  }
+  await methodStore.getMermaidCode(methodStore.methodChains[item].methodChain)
 }
 </script>
 
-
-<style scoped>
-
-</style>
+<style scoped></style>

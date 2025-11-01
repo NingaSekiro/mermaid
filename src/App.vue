@@ -5,13 +5,14 @@
     }"
   >
     <div class="app">
-      <router-view />
+      <BasicLayout/>
     </div>
   </a-config-provider>
 </template>
 
 <script setup>
 import { theme } from 'ant-design-vue';
+import BasicLayout from '@/layouts/BasicLayout.vue'
 </script>
 
 <style scoped>.app {

@@ -28,6 +28,7 @@
     "@vue/test-utils": "^2.4.6",
     "jsdom": "^27.0.1",
     "prettier": "3.6.2",
+    "rollup-plugin-visualizer": "^6.0.5",
     "sass-embedded": "^1.93.2",
     "vite": "^7.1.11",
     "vite-plugin-vue-devtools": "^8.0.3",

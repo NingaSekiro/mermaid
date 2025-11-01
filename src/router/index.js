@@ -1,24 +1,20 @@
-import { createRouter, createWebHistory } from 'vue-router'
-import MermaidRenderer from '@/components/MermaidRenderer.vue'
+import { createRouter, createWebHashHistory } from 'vue-router'
 import Home from '@/views/Home.vue'
-
+import RecordAction from '@/views/RecordAction.vue'
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+  mode: 'hash',
+  history: createWebHashHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: '/',
-      redirect: '/home'  // 默认路径重定向到 /home
+      component: Home,
     },
     {
-      path: '/mermaid',
-      component: MermaidRenderer
+      path: '/config',
+      component: Home,
     },
-    {
-      path: '/home',
-      component: Home
-    }
-  ]
+  ],
 })
 
 export default router

@@ -15,6 +15,7 @@
 import { nextTick, ref, watch } from 'vue'
 import mermaid from 'mermaid'
 
+
 // 定义 props
 const props = defineProps({
   mermaidCode: {
@@ -67,7 +68,8 @@ const updateGraph = async () => {
     }
 
     console.log('start update')
-    const { svg } = await mermaid.render('graphDiv', props.mermaidCode)
+    // 不同id 回去时组件不用重新update，同时还保留有原本的dom
+    const { svg } = await mermaid.render('graphDiv-' + Date.now(), props.mermaidCode)
     mermaidSvg.value = svg
     error.value = ''
 
