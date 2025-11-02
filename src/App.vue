@@ -17,6 +17,6 @@ import BasicLayout from '@/layouts/BasicLayout.vue'
 
 <style scoped>.app {
   background-color: #141414; /* 添加深色背景 */
-  min-height: 100vh; /* 确保覆盖整个视口高度 */
+  height: 100vh; /* 确保覆盖整个视口高度 */
 }
 </style>

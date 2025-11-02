@@ -8,9 +8,13 @@ import {
 } from '@/apis/method.js'
 
 export const useMethodStore = defineStore('method', () => {
+  const projectId = ref({})
+  const setProjectId = (newParams) => {
+    projectId.value = newParams
+  }
   const methodRecords = ref([])
-  const getMethodRecords = async () => {
-    const res = await getMethodRecordsAPI()
+  const getMethodRecords = async (projectId) => {
+    const res = await getMethodRecordsAPI(projectId)
     methodRecords.value = res.data
   }
 
@@ -27,12 +31,14 @@ export const useMethodStore = defineStore('method', () => {
   }
 
   const packageNames = ref([])
-  const getPackageNames = async () => {
-    const res = await getPackageNamesAPI()
+  const getPackageNames = async (projectId) => {
+    const res = await getPackageNamesAPI(projectId)
     packageNames.value = res.data
   }
 
   return {
+    projectId,
+    setProjectId,
     mermaidCode,
     getMermaidCode,
     methodRecords,

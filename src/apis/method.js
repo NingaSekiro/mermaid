@@ -1,9 +1,10 @@
 import request from '@/util/http'
 
-export const getMethodRecordsAPI = () => {
+export const getMethodRecordsAPI = (projectId) => {
   return request({
     url: '/methodRecords',
     method: 'GET',
+    params: { projectId },
   })
 }
 
@@ -23,9 +24,18 @@ export const mermaidAPI = (methodChain) => {
   })
 }
 
-export const getPackageNamesAPI = () => {
+export const getPackageNamesAPI = (projectId) => {
   return request({
     url: '/packageNames',
     method: 'GET',
+    params: { projectId },
+  })
+}
+
+export const recordAPI = (params) => {
+  return request({
+    url: '/record',
+    method: 'POST',
+    data: params,
   })
 }

@@ -8,10 +8,10 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      component: Home,
+      component: RecordAction,
     },
     {
-      path: '/config',
+      path: '/result',
       component: Home,
     },
   ],

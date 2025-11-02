@@ -13,10 +13,7 @@
         <a-collapse v-model:activeKey="activeOutKey" @change="updateMethodChains(activeOutKey)">
           <a-collapse-panel v-for="(record, index) in methodStore.methodRecords" :key="index">
             <template #header>
-              <a-typography-text
-                :ellipsis="{ tooltip: true }"
-                :content="record"
-              >
+              <a-typography-text :ellipsis="{ tooltip: true }" :content="record">
               </a-typography-text>
             </template>
             <a-list :data-source="methodStore.methodChains" :bordered="false" size="small">
@@ -74,7 +71,7 @@ onMounted(() => {
 })
 
 const updateMethodRecords = async () => {
-  await methodStore.getMethodRecords()
+  await methodStore.getMethodRecords(methodStore.projectId)
 }
 
 const updateMethodChains = async (item) => {
@@ -92,6 +89,4 @@ const updateMermaidCode = async (index) => {
 }
 </script>
 
-<style scoped>
-
-</style>
+<style scoped></style>
