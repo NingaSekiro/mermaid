@@ -71,7 +71,7 @@ onMounted(() => {
 })
 
 const updateMethodRecords = async () => {
-  await methodStore.getMethodRecords(methodStore.projectId)
+  await methodStore.getMethodRecords()
 }
 
 const updateMethodChains = async (item) => {
@@ -85,7 +85,7 @@ const updateMermaidCode = async (index) => {
   if (index === undefined) {
     return
   }
-  await methodStore.getMermaidCode(methodStore.methodChains[index].methodChain)
+  await methodStore.getMermaidCode(methodStore.methodChains[index].callChainId)
 }
 </script>
 

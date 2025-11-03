@@ -8,13 +8,19 @@ import {
 } from '@/apis/method.js'
 
 export const useMethodStore = defineStore('method', () => {
-  const projectId = ref({})
+  const projectId = ref()
   const setProjectId = (newParams) => {
     projectId.value = newParams
   }
+
+  const checked=ref(false)
+  const setChecked = (newParams) => {
+    checked.value = newParams
+  }
+
   const methodRecords = ref([])
-  const getMethodRecords = async (projectId) => {
-    const res = await getMethodRecordsAPI(projectId)
+  const getMethodRecords = async () => {
+    const res = await getMethodRecordsAPI(projectId.value)
     methodRecords.value = res.data
   }
 
@@ -26,19 +32,21 @@ export const useMethodStore = defineStore('method', () => {
 
   const mermaidCode = ref('')
   const getMermaidCode = async (methodChain) => {
-    const res = await mermaidAPI(methodChain)
+    const res = await mermaidAPI(projectId.value, methodChain)
     mermaidCode.value = res.data.mermaidCode
   }
 
   const packageNames = ref([])
-  const getPackageNames = async (projectId) => {
-    const res = await getPackageNamesAPI(projectId)
+  const getPackageNames = async () => {
+    const res = await getPackageNamesAPI(projectId.value)
     packageNames.value = res.data
   }
 
   return {
     projectId,
     setProjectId,
+    checked,
+    setChecked,
     mermaidCode,
     getMermaidCode,
     methodRecords,

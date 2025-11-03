@@ -4,7 +4,7 @@
       v-model:checked="state.checkAll"
       :indeterminate="state.indeterminate"
       @change="onCheckAllChange"
-      :disabled="checked"
+      :disabled="methodStore.checked"
     >
       录制package
     </a-checkbox>
@@ -12,11 +12,11 @@
   <a-checkbox-group
     v-model:value="state.checkedList"
     :options="methodStore.packageNames"
-    :disabled="checked"
+    :disabled="methodStore.checked"
   />
   <br />
   <a-switch
-    v-model:checked="checked"
+    v-model:checked="methodStore.checked"
     @click="doHandleClick"
     checked-children="录制中"
     un-checked-children="未录制"
@@ -41,6 +41,12 @@
               padding: '4px 0',
             }"
           >
+            <a-typography-text
+              :ellipsis="{ tooltip: true }"
+              style="display: block; width: 100%"
+              :content="item.methodChain"
+            >
+            </a-typography-text>
           </a-list-item>
         </template>
       </a-list>
@@ -73,18 +79,18 @@ import MermaidRenderer from '@/components/MermaidRenderer.vue'
 const methodStore = useMethodStore()
 const recordingMethodChains = ref([])
 const mermaidCode = ref('')
-const checked = ref(false)
 const timer = ref(null)
 
 onMounted(async () => {
-  const urlParams = new URLSearchParams(window.location.search)
-  const paramsObject = {}
-  urlParams.forEach((value, key) => {
-    paramsObject[key] = value
-  })
-  methodStore.setProjectId(paramsObject.projectId)
-
-  await methodStore.getPackageNames(methodStore.projectId)
+  if (!methodStore.projectId) {
+    const urlParams = new URLSearchParams(window.location.search)
+    const paramsObject = {}
+    urlParams.forEach((value, key) => {
+      paramsObject[key] = value
+    })
+    methodStore.setProjectId(paramsObject.projectId)
+  }
+  await methodStore.getPackageNames()
   state.checkedList = [...methodStore.packageNames]
 })
 
@@ -97,7 +103,7 @@ const startPolling = () => {
         start: true,
       }
       const res = await recordAPI(params)
-      recordingMethodChains.value = res.data|| []
+      recordingMethodChains.value = res.data || []
     } catch (error) {
       console.error('轮询数据失败:', error)
     }
@@ -126,7 +132,10 @@ const updateMermaidCode = async (index) => {
   if (index === undefined) {
     return
   }
-  const res = await mermaidAPI(recordingMethodChains.value[index].methodChain)
+  const res = await mermaidAPI(
+    methodStore.projectId,
+    recordingMethodChains.value[index].callChainId,
+  )
   mermaidCode.value = res.data.mermaidCode
 }
 watch(
@@ -137,7 +146,7 @@ watch(
   },
 )
 const doHandleClick = async () => {
-  if (checked.value) {
+  if (methodStore.checked) {
     startPolling()
   } else {
     // 停止录制
