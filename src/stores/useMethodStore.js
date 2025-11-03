@@ -31,11 +31,24 @@ export const useMethodStore = defineStore('method', () => {
   }
 
   const mermaidCode = ref('')
-  const getMermaidCode = async (methodChain) => {
-    const res = await mermaidAPI(projectId.value, methodChain)
+  const getMermaidCode = async (record, methodChain) => {
+    const res = await mermaidAPI(projectId.value, record, methodChain)
     mermaidCode.value = res.data.mermaidCode
   }
 
+  /**
+   * 方法详情响应数据引用
+   * 存储从 methodDetailAPI 获取的调用记录详情信息
+   * 对应后端 CallRecordDo 实体类结构:
+   * @typedef {Object} CallRecordDo
+   * @property {number} id - 调用记录ID
+   * @property {number} callChainId - 调用链ID
+   * @property {string} method - 方法名
+   * @property {string} args - 方法参数
+   * @property {string} returnValue - 返回值
+   * @property {string} target - 目标对象
+   * @property {string} timestamp - 时间戳
+   */
   const methodDetail = ref({})
   const getMethodDetail = async (id, record) => {
     const res = await methodDetailAPI(id, record)
@@ -59,6 +72,8 @@ export const useMethodStore = defineStore('method', () => {
     getMethodRecords,
     methodChains,
     getMethodChains,
+    methodDetail,
+    getMethodDetail,
     packageNames,
     getPackageNames,
   }

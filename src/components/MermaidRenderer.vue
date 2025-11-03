@@ -20,18 +20,47 @@
     <div class="stage" :style="transformStyle" v-html="mermaidSvg"></div>
   </div>
   <div v-else class="placeholder">图表将在这里显示</div>
-  <a-drawer v-model:open="drawerOpen" placement="right" :width="420" :title="drawerText">
-    <div style="white-space: pre-wrap; word-break: break-word">{{ drawerText }}</div>
+  <a-drawer v-model:open="drawerOpen" placement="right" :width="480" :title="drawerText">
+    <a-skeleton active :loading="detailLoading">
+      <a-descriptions bordered :column="1" size="small">
+        <a-descriptions-item label="方法名">
+          <span class="code-text">{{ methodStore.methodDetail.method || '-' }}</span>
+        </a-descriptions-item>
+        <a-descriptions-item label="参数">
+          <pre class="code-block">{{ methodStore.methodDetail.args || '-' }}</pre>
+        </a-descriptions-item>
+        <a-descriptions-item label="返回值">
+          <pre class="code-block">{{ methodStore.methodDetail.returnValue || '-' }}</pre>
+        </a-descriptions-item>
+        <a-descriptions-item label="目标对象">
+          <span class="mono">{{ methodStore.methodDetail.target || '-' }}</span>
+        </a-descriptions-item>
+        <a-descriptions-item label="时间戳">
+          <span class="mono">{{ methodStore.methodDetail.timestamp || '-' }}</span>
+        </a-descriptions-item>
+        <a-descriptions-item label="记录ID">
+          <span class="mono">{{ methodStore.methodDetail.id ?? '-' }}</span>
+        </a-descriptions-item>
+        <a-descriptions-item label="调用链ID">
+          <span class="mono">{{ methodStore.methodDetail.callChainId ?? '-' }}</span>
+        </a-descriptions-item>
+      </a-descriptions>
+    </a-skeleton>
   </a-drawer>
 </template>
 
 <script setup>
 import { computed, nextTick, ref, watch } from 'vue'
 import mermaid from 'mermaid'
+import { useMethodStore } from '@/stores/useMethodStore.js'
 
 // 定义 props
 const props = defineProps({
   mermaidCode: {
+    type: String,
+    default: '',
+  },
+  record: {
     type: String,
     default: '',
   },
@@ -44,6 +73,7 @@ const error = ref('')
 // 抽屉状态
 const drawerOpen = ref(false)
 const drawerText = ref('')
+const detailLoading = ref(false)
 
 // 画布交互状态
 const canvasRef = ref(null)
@@ -91,6 +121,15 @@ mermaid.initialize({
   theme: 'base',
   themeVariables: tmpThemeVariables,
 })
+const methodStore = useMethodStore()
+const updateDrawerText = async (id, record) => {
+  try {
+    detailLoading.value = true
+    await methodStore.getMethodDetail(id, record)
+  } finally {
+    detailLoading.value = false
+  }
+}
 // 更新图表
 const updateGraph = async () => {
   try {
@@ -125,6 +164,7 @@ const updateGraph = async () => {
         const text = (msg.textContent || '').trim()
         const hasParen = text.includes('(') && text.includes(')')
         if (!hasParen) return
+        const id = text.split('-')[0]
 
         // 标记可点击
         msg.classList.add('clickable')
@@ -132,10 +172,7 @@ const updateGraph = async () => {
         // 绑定点击事件
         msg.addEventListener('click', (e) => {
           e.stopPropagation()
-          // 点击反馈：短暂高亮
-          msg.classList.add('active')
-          setTimeout(() => msg.classList.remove('active'), 180)
-
+          updateDrawerText(id, props.record)
           drawerText.value = text
           drawerOpen.value = true
         })
@@ -146,6 +183,7 @@ const updateGraph = async () => {
     error.value = err.message || '渲染失败'
   }
 }
+
 // 监听 mermaidCode 变化并重新渲染
 watch(
   () => props.mermaidCode,
@@ -232,10 +270,6 @@ const onWheel = (e) => {
   text-decoration: underline; /* 悬浮：下划线 */
 }
 
-.stage :deep(.messageText.active) {
-  fill: #1677ff !important; /* 点击瞬间反馈（可保留） */
-}
-
 .placeholder {
   display: flex;
   justify-content: center;
@@ -243,6 +277,35 @@ const onWheel = (e) => {
   height: 100%;
   min-height: 280px;
   color: #999;
+}
+
+.code-text {
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
+    monospace;
+  color: #cdd6f4;
+}
+
+.mono {
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
+    monospace;
+  color: #a6adc8;
+}
+
+.code-block {
+  margin: 0;
+  padding: 8px 10px;
+  max-height: 200px;
+  overflow: auto;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  color: #cdd6f4;
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .error-message {

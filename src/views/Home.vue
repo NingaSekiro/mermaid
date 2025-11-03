@@ -19,7 +19,7 @@
             <a-list :data-source="methodStore.methodChains" :bordered="false" size="small">
               <template #renderItem="{ item, index: itemIndex }">
                 <a-list-item
-                  @click="updateMermaidCode(itemIndex)"
+                  @click="updateMermaidCode(itemIndex, index)"
                   :style="{
                     cursor: 'pointer',
                     padding: '4px 0',
@@ -46,7 +46,11 @@
           padding: '24px',
         }"
       >
-        <MermaidRenderer v-if="methodStore.mermaidCode" :mermaid-code="methodStore.mermaidCode" />
+        <MermaidRenderer
+          v-if="methodStore.mermaidCode"
+          :mermaidCode="methodStore.mermaidCode"
+          :record="record"
+        />
         <div
           v-else
           style="height: 100%; display: flex; align-items: center; justify-content: center"
@@ -65,6 +69,7 @@ import MermaidRenderer from '@/components/MermaidRenderer.vue'
 
 const activeOutKey = ref([])
 const methodStore = useMethodStore()
+const record = ref('')
 
 onMounted(() => {
   updateMethodRecords()
@@ -81,11 +86,12 @@ const updateMethodChains = async (item) => {
   await methodStore.getMethodChains(methodStore.methodRecords[item[0]])
 }
 
-const updateMermaidCode = async (index) => {
-  if (index === undefined) {
+const updateMermaidCode = async (index, recordIndex) => {
+  if (index === undefined || recordIndex === undefined) {
     return
   }
-  await methodStore.getMermaidCode(methodStore.methodChains[index].callChainId)
+  record.value = methodStore.methodRecords[recordIndex]
+  await methodStore.getMermaidCode(record.value, methodStore.methodChains[index].callChainId)
 }
 </script>
 
