@@ -4,7 +4,7 @@ import {
   getMethodChainsAPI,
   getMethodRecordsAPI,
   getPackageNamesAPI,
-  mermaidAPI,
+  mermaidAPI, methodDetailAPI
 } from '@/apis/method.js'
 
 export const useMethodStore = defineStore('method', () => {
@@ -34,6 +34,12 @@ export const useMethodStore = defineStore('method', () => {
   const getMermaidCode = async (methodChain) => {
     const res = await mermaidAPI(projectId.value, methodChain)
     mermaidCode.value = res.data.mermaidCode
+  }
+
+  const methodDetail = ref({})
+  const getMethodDetail = async (id, record) => {
+    const res = await methodDetailAPI(id, record)
+    methodDetail.value = res.data
   }
 
   const packageNames = ref([])

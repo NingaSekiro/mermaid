@@ -24,6 +24,14 @@ export const mermaidAPI = (projectId, callChainId) => {
   })
 }
 
+export const methodDetailAPI = (id, record) => {
+  return request({
+    url: '/methodDetail',
+    method: 'GET',
+    params: { id: id, record: record },
+  })
+}
+
 export const getPackageNamesAPI = (projectId) => {
   return request({
     url: '/packageNames',

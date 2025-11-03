@@ -2,31 +2,57 @@
   <div v-if="error" class="error-message">
     <a-alert type="error">
       <template #message>
-        <div style="white-space: pre-wrap;">{{ mermaidCode }}</div>
+        <div style="white-space: pre-wrap">{{ mermaidCode }}</div>
       </template>
     </a-alert>
     {{ error }}
   </div>
-  <div v-else-if="mermaidCode" v-html="mermaidSvg" class="mermaid-container"></div>
+  <div
+    v-else-if="mermaidCode"
+    class="canvas"
+    ref="canvasRef"
+    @mousedown="onMouseDown"
+    @mouseup="onMouseUp"
+    @mouseleave="onMouseUp"
+    @mousemove="onMouseMove"
+    @wheel.prevent="onWheel"
+  >
+    <div class="stage" :style="transformStyle" v-html="mermaidSvg"></div>
+  </div>
   <div v-else class="placeholder">图表将在这里显示</div>
 </template>
 
 <script setup>
-import { nextTick, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import mermaid from 'mermaid'
-
 
 // 定义 props
 const props = defineProps({
   mermaidCode: {
     type: String,
-    default: ''
-  }
+    default: '',
+  },
 })
 
 // 组件状态
 const mermaidSvg = ref('')
 const error = ref('')
+
+// 画布交互状态
+const canvasRef = ref(null)
+const scale = ref(1)
+const translateX = ref(0)
+const translateY = ref(0)
+const isPanning = ref(false)
+const panStartX = ref(0)
+const panStartY = ref(0)
+const panOriginX = ref(0)
+const panOriginY = ref(0)
+
+const transformStyle = computed(() => ({
+  transform: `translate(${translateX.value}px, ${translateY.value}px) scale(${scale.value})`,
+  transformOrigin: '0 0',
+}))
 
 // 初始化 mermaid 配置（保持不变）
 let tmpThemeVariables = {
@@ -37,13 +63,13 @@ let tmpThemeVariables = {
   primaryTextColor: '#a9b7c5',
   actorBkg: '#373b39',
   activationBkgColor: '#373b39',
-  actorBorder: '#373b39'
+  actorBorder: '#373b39',
 }
 
 mermaid.initialize({
-  'startOnLoad': true,
-  'maxTextSize': 500000,
-  'maxEdges': 5000,
+  startOnLoad: true,
+  maxTextSize: 500000,
+  maxEdges: 5000,
   darkMode: true,
   fontSize: 12,
   sequence: {
@@ -53,10 +79,10 @@ mermaid.initialize({
     height: 40,
     width: 60,
     actorMargin: 10,
-    wrap: false
+    wrap: false,
   },
   theme: 'base',
-  themeVariables: tmpThemeVariables
+  themeVariables: tmpThemeVariables,
 })
 // 更新图表
 const updateGraph = async () => {
@@ -71,6 +97,10 @@ const updateGraph = async () => {
     // 不同id 回去时组件不用重新update，同时还保留有原本的dom
     const { svg } = await mermaid.render('graphDiv-' + Date.now(), props.mermaidCode)
     mermaidSvg.value = svg
+    // 渲染后重置视图
+    scale.value = 1
+    translateX.value = 0
+    translateY.value = 0
     error.value = ''
 
     await nextTick(() => {
@@ -96,15 +126,79 @@ const updateGraph = async () => {
   }
 }
 // 监听 mermaidCode 变化并重新渲染
-watch(() => props.mermaidCode, () => {
-  updateGraph()
-}, { immediate: true })
+watch(
+  () => props.mermaidCode,
+  () => {
+    updateGraph()
+  },
+  { immediate: true },
+)
 
+// 交互：拖拽平移
+const onMouseDown = (e) => {
+  if (e.button !== 0) return
+  isPanning.value = true
+  panStartX.value = e.clientX
+  panStartY.value = e.clientY
+  panOriginX.value = translateX.value
+  panOriginY.value = translateY.value
+}
 
+const onMouseMove = (e) => {
+  if (!isPanning.value) return
+  const dx = e.clientX - panStartX.value
+  const dy = e.clientY - panStartY.value
+  translateX.value = panOriginX.value + dx
+  translateY.value = panOriginY.value + dy
+}
+
+const onMouseUp = () => {
+  isPanning.value = false
+}
+
+// 交互：滚轮缩放（以光标为中心）
+const clamp = (val, min, max) => Math.min(Math.max(val, min), max)
+const onWheel = (e) => {
+  const container = canvasRef.value
+  if (!container) return
+
+  const rect = container.getBoundingClientRect()
+  const mouseX = e.clientX - rect.left
+  const mouseY = e.clientY - rect.top
+
+  const zoomIntensity = 0.1
+  const wheel = e.deltaY < 0 ? 1 : -1
+  const newScale = clamp(scale.value * (1 + wheel * zoomIntensity), 0.1, 8)
+
+  // 将光标下的点保持不动
+  const worldX = (mouseX - translateX.value) / scale.value
+  const worldY = (mouseY - translateY.value) / scale.value
+
+  scale.value = newScale
+  translateX.value = mouseX - worldX * scale.value
+  translateY.value = mouseY - worldY * scale.value
+}
 </script>
 
-
 <style scoped>
+.canvas {
+  position: relative;
+  width: 100%;
+  height: 100vh; /* 占满可视高度 */
+  min-height: 100vh;
+  overflow: hidden;
+  background: radial-gradient(circle at 25% 25%, #232323 0%, #1f1f1f 60%);
+  cursor: grab;
+  user-select: none;
+}
+
+.canvas:active {
+  cursor: grabbing;
+}
+
+.stage :deep(svg) {
+  display: block;
+}
 
 .placeholder {
   display: flex;
