@@ -20,6 +20,9 @@
     <div class="stage" :style="transformStyle" v-html="mermaidSvg"></div>
   </div>
   <div v-else class="placeholder">图表将在这里显示</div>
+  <a-drawer v-model:open="drawerOpen" placement="right" :width="420" :title="drawerText">
+    <div style="white-space: pre-wrap; word-break: break-word">{{ drawerText }}</div>
+  </a-drawer>
 </template>
 
 <script setup>
@@ -37,6 +40,10 @@ const props = defineProps({
 // 组件状态
 const mermaidSvg = ref('')
 const error = ref('')
+
+// 抽屉状态
+const drawerOpen = ref(false)
+const drawerText = ref('')
 
 // 画布交互状态
 const canvasRef = ref(null)
@@ -112,11 +119,25 @@ const updateGraph = async () => {
         })
       })
 
-      // 也可以针对 messageText（箭头上的文字）
+      // messageText（箭头上的文字）- 仅对包含()的项启用抽屉
       const messages = document.querySelectorAll('.messageText')
       messages.forEach((msg) => {
-        msg.addEventListener('click', () => {
-          console.log('点击了消息:', msg.textContent)
+        const text = (msg.textContent || '').trim()
+        const hasParen = text.includes('(') && text.includes(')')
+        if (!hasParen) return
+
+        // 标记可点击
+        msg.classList.add('clickable')
+
+        // 绑定点击事件
+        msg.addEventListener('click', (e) => {
+          e.stopPropagation()
+          // 点击反馈：短暂高亮
+          msg.classList.add('active')
+          setTimeout(() => msg.classList.remove('active'), 180)
+
+          drawerText.value = text
+          drawerOpen.value = true
         })
       })
     })
@@ -198,6 +219,21 @@ const onWheel = (e) => {
 
 .stage :deep(svg) {
   display: block;
+}
+
+.stage :deep(.messageText.clickable) {
+  cursor: pointer;
+  fill: #69b1ff; /* 静态：可点击色（暗黑下的次强调） */
+  transition: fill 160ms ease;
+}
+
+.stage :deep(.messageText.clickable:hover) {
+  fill: #91caff; /* 悬浮：略微提亮 */
+  text-decoration: underline; /* 悬浮：下划线 */
+}
+
+.stage :deep(.messageText.active) {
+  fill: #1677ff !important; /* 点击瞬间反馈（可保留） */
 }
 
 .placeholder {
