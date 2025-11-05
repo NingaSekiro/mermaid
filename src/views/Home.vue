@@ -28,7 +28,7 @@
                   <a-typography-text
                     :ellipsis="{ tooltip: true }"
                     style="display: block; width: 100%"
-                    :content="item.methodChain"
+                    :content="item.threadName + ' ' + item.methodChain"
                   >
                   </a-typography-text>
                 </a-list-item>
