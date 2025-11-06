@@ -17,7 +17,7 @@
   <br />
   <a-switch
     v-model:checked="methodStore.checked"
-    @click="doHandleClick"
+    @change="doHandleClick"
     checked-children="录制中"
     un-checked-children="未录制"
   />
@@ -58,7 +58,7 @@
           borderTop: '1px solid rgba(255, 255, 255, 0.12)',
         }"
       >
-        <MermaidRenderer v-if="mermaidCode" :mermaid-code="mermaidCode" />
+        <MermaidRenderer v-if="mermaidCode" :mermaid-code="mermaidCode" :record="recordingMethodChains[0].record" />
         <div
           v-else
           style="height: 100%; display: flex; align-items: center; justify-content: center"
@@ -71,7 +71,7 @@
 </template>
 
 <script setup>
-import { onMounted, reactive, ref, watch } from 'vue'
+import { onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { useMethodStore } from '@/stores/useMethodStore.js'
 import { mermaidAPI, recordAPI } from '@/apis/method.js'
 import MermaidRenderer from '@/components/MermaidRenderer.vue'
@@ -94,6 +94,10 @@ onMounted(async () => {
   state.checkedList = [...methodStore.packageNames]
 })
 
+onUnmounted(() => {
+  stopPolling()
+})
+
 const startPolling = () => {
   timer.value = setInterval(async () => {
     try {
@@ -110,11 +114,17 @@ const startPolling = () => {
   }, 5000)
 }
 
-const stopPolling = () => {
+const stopPolling = async () => {
   if (timer.value) {
     clearInterval(timer.value)
     timer.value = null
   }
+  const params = {
+    projectId: methodStore.projectId,
+    config: state.checkedList,
+    start: false,
+  }
+  await recordAPI(params)
 }
 const state = reactive({
   indeterminate: false,
@@ -134,6 +144,7 @@ const updateMermaidCode = async (index) => {
   }
   const res = await mermaidAPI(
     methodStore.projectId,
+    recordingMethodChains.value[index].record,
     recordingMethodChains.value[index].callChainId,
   )
   mermaidCode.value = res.data.mermaidCode
@@ -150,13 +161,7 @@ const doHandleClick = async () => {
     startPolling()
   } else {
     // 停止录制
-    stopPolling()
-    const params = {
-      projectId: methodStore.projectId,
-      config: state.checkedList,
-      start: false,
-    }
-    await recordAPI(params)
+    await stopPolling()
   }
 }
 </script>

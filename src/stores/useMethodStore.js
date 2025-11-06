@@ -32,7 +32,7 @@ export const useMethodStore = defineStore('method', () => {
 
   const mermaidCode = ref('')
   const getMermaidCode = async (record, methodChain) => {
-    const res = await mermaidAPI(projectId.value, record, methodChain)
+    const res = await mermaidAPI(record, methodChain)
     mermaidCode.value = res.data.mermaidCode
   }
 

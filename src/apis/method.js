@@ -16,11 +16,11 @@ export const getMethodChainsAPI = (record) => {
   })
 }
 
-export const mermaidAPI = (projectId, record, callChainId) => {
+export const mermaidAPI = (record, callChainId) => {
   return request({
     url: '/mermaid',
     method: 'GET',
-    params: { projectId: projectId, callChainId: callChainId, record: record },
+    params: { callChainId: callChainId, record: record },
   })
 }
 
