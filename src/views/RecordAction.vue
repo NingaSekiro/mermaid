@@ -4,22 +4,18 @@
       v-model:checked="state.checkAll"
       :indeterminate="state.indeterminate"
       @change="onCheckAllChange"
-      :disabled="methodStore.checked"
     >
       录制package
     </a-checkbox>
   </div>
-  <a-checkbox-group
-    v-model:value="state.checkedList"
-    :options="methodStore.packageNames"
-    :disabled="methodStore.checked"
-  />
+  <a-checkbox-group v-model:value="state.checkedList" :options="packageNames" />
   <br />
   <a-switch
-    v-model:checked="methodStore.checked"
+    v-model:checked="recording"
     @change="doHandleClick"
     checked-children="录制中"
     un-checked-children="未录制"
+    :disabled="recordDisabled"
   />
   <a-layout class="main-layout" style="height: 100%">
     <!-- 左侧侧边栏 -->
@@ -32,7 +28,7 @@
         borderRight: '1px solid rgba(255, 255, 255, 0.12)',
       }"
     >
-      <a-list :data-source="recordingMethodChains" :bordered="false" size="small">
+      <a-list :data-source="recordResp.methodChains" :bordered="false" size="small">
         <template #renderItem="{ item, index: itemIndex }">
           <a-list-item
             @click="updateMermaidCode(itemIndex)"
@@ -44,7 +40,7 @@
             <a-typography-text
               :ellipsis="{ tooltip: true }"
               style="display: block; width: 100%"
-              :content="item.methodChain"
+              :content="item.message?item.message:item.threadName+' '+item.methodChain"
             >
             </a-typography-text>
           </a-list-item>
@@ -58,7 +54,11 @@
           borderTop: '1px solid rgba(255, 255, 255, 0.12)',
         }"
       >
-        <MermaidRenderer v-if="mermaidCode" :mermaid-code="mermaidCode" :record="recordingMethodChains[0].record" />
+        <MermaidRenderer
+          v-if="mermaidCode"
+          :mermaid-code="mermaidCode"
+          :record="recordResp.record"
+        />
         <div
           v-else
           style="height: 100%; display: flex; align-items: center; justify-content: center"
@@ -73,13 +73,23 @@
 <script setup>
 import { onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { useMethodStore } from '@/stores/useMethodStore.js'
-import { mermaidAPI, recordAPI } from '@/apis/method.js'
+import { getInitConfig, mermaidAPI, recordAPI } from '@/apis/method.js'
 import MermaidRenderer from '@/components/MermaidRenderer.vue'
 
 const methodStore = useMethodStore()
-const recordingMethodChains = ref([])
+const recordResp = ref([])
 const mermaidCode = ref('')
 const timer = ref(null)
+// 是否禁用录制开关
+const recordDisabled = ref(false)
+const packageNames = ref([])
+// 是否选中录制开关
+const recording = ref(false)
+const state = reactive({
+  indeterminate: false,
+  checkAll: true,
+  checkedList: [],
+})
 
 onMounted(async () => {
   if (!methodStore.projectId) {
@@ -90,13 +100,23 @@ onMounted(async () => {
     })
     methodStore.setProjectId(paramsObject.projectId)
   }
-  await methodStore.getPackageNames()
-  state.checkedList = [...methodStore.packageNames]
+  const res = await getInitConfig(methodStore.projectId)
+  // 初始化选中所有package
+  state.checkedList = res.data.packageNames || []
+  packageNames.value = res.data.packageNames || []
+  recordDisabled.value = !res.data.status
 })
 
 onUnmounted(() => {
   stopPolling()
 })
+watch(
+  () => state.checkedList,
+  (val) => {
+    state.indeterminate = !!val.length && val.length < packageNames.value.length
+    state.checkAll = val.length === packageNames.value.length
+  },
+)
 
 const startPolling = () => {
   timer.value = setInterval(async () => {
@@ -107,7 +127,12 @@ const startPolling = () => {
         start: true,
       }
       const res = await recordAPI(params)
-      recordingMethodChains.value = res.data || []
+      recordResp.value = res.data || []
+      if (recordResp.value.code !== 0) {
+        stopPolling()
+        recordDisabled.value = true
+        recording.value = false
+      }
     } catch (error) {
       console.error('轮询数据失败:', error)
     }
@@ -118,22 +143,18 @@ const stopPolling = async () => {
   if (timer.value) {
     clearInterval(timer.value)
     timer.value = null
+    const params = {
+      projectId: methodStore.projectId,
+      config: state.checkedList,
+      start: false,
+    }
+    await recordAPI(params)
   }
-  const params = {
-    projectId: methodStore.projectId,
-    config: state.checkedList,
-    start: false,
-  }
-  await recordAPI(params)
 }
-const state = reactive({
-  indeterminate: false,
-  checkAll: true,
-  checkedList: [],
-})
+
 const onCheckAllChange = (e) => {
   Object.assign(state, {
-    checkedList: e.target.checked ? methodStore.packageNames : [],
+    checkedList: e.target.checked ? packageNames.value : [],
     indeterminate: false,
   })
 }
@@ -143,21 +164,14 @@ const updateMermaidCode = async (index) => {
     return
   }
   const res = await mermaidAPI(
-    methodStore.projectId,
-    recordingMethodChains.value[index].record,
-    recordingMethodChains.value[index].callChainId,
+    recordResp.value.record,
+    recordResp.value.methodChains[index].callChainId,
   )
   mermaidCode.value = res.data.mermaidCode
 }
-watch(
-  () => state.checkedList,
-  (val) => {
-    state.indeterminate = !!val.length && val.length < methodStore.packageNames.length
-    state.checkAll = val.length === methodStore.packageNames.length
-  },
-)
+
 const doHandleClick = async () => {
-  if (methodStore.checked) {
+  if (recording.value) {
     startPolling()
   } else {
     // 停止录制

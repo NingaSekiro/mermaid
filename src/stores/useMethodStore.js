@@ -3,7 +3,6 @@ import { ref } from 'vue'
 import {
   getMethodChainsAPI,
   getMethodRecordsAPI,
-  getPackageNamesAPI,
   mermaidAPI, methodDetailAPI
 } from '@/apis/method.js'
 
@@ -11,11 +10,6 @@ export const useMethodStore = defineStore('method', () => {
   const projectId = ref()
   const setProjectId = (newParams) => {
     projectId.value = newParams
-  }
-
-  const checked=ref(false)
-  const setChecked = (newParams) => {
-    checked.value = newParams
   }
 
   const methodRecords = ref([])
@@ -55,17 +49,9 @@ export const useMethodStore = defineStore('method', () => {
     methodDetail.value = res.data
   }
 
-  const packageNames = ref([])
-  const getPackageNames = async () => {
-    const res = await getPackageNamesAPI(projectId.value)
-    packageNames.value = res.data
-  }
-
   return {
     projectId,
     setProjectId,
-    checked,
-    setChecked,
     mermaidCode,
     getMermaidCode,
     methodRecords,
@@ -74,7 +60,5 @@ export const useMethodStore = defineStore('method', () => {
     getMethodChains,
     methodDetail,
     getMethodDetail,
-    packageNames,
-    getPackageNames,
   }
 })

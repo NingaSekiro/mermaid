@@ -32,7 +32,7 @@ export const methodDetailAPI = (id, record) => {
   })
 }
 
-export const getPackageNamesAPI = (projectId) => {
+export const getInitConfig = (projectId) => {
   return request({
     url: '/packageNames',
     method: 'GET',
