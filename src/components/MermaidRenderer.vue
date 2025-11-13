@@ -91,16 +91,24 @@ const transformStyle = computed(() => ({
   transformOrigin: '0 0',
 }))
 
-// 初始化 mermaid 配置（保持不变）
-let tmpThemeVariables = {
+// 与整体暗色主题统一
+const tmpThemeVariables = {
   darkMode: true,
-  background: '#2b2b2b',
-  lineColor: '#a9b7c5',
-  primaryColor: '#2b2b2b',
-  primaryTextColor: '#a9b7c5',
-  actorBkg: '#373b39',
-  activationBkgColor: '#373b39',
-  actorBorder: '#373b39',
+  background: 'transparent', // 用外层卡片背景
+  primaryColor: 'rgba(36,36,38,1)', // 卡片渐变色起点
+  primaryTextColor: '#e5e7eb', // 主文字色（与卡片标题一致）
+  primaryBorderColor: 'rgba(255,255,255,0.12)',
+  lineColor: 'rgba(255,255,255,0.35)', // 连线柔和灰
+  secondaryColor: '#0e0e10', // 深色块
+  tertiaryColor: 'rgba(16,185,129,0.15)', // 品牌色淡底
+  actorBkg: 'rgba(36,36,38,1)',
+  actorBorder: 'rgba(255,255,255,0.2)',
+  actorTextColor: '#e5e7eb',
+  activationBkgColor: 'rgba(16,185,129,0.25)',
+  activationBorderColor: '#10b981',
+  noteBkgColor: 'rgba(255,255,255,0.04)',
+  noteBorderColor: 'rgba(255,255,255,0.08)',
+  noteTextColor: '#a1a1aa',
 }
 
 mermaid.initialize({
@@ -108,7 +116,6 @@ mermaid.initialize({
   maxTextSize: 500000,
   maxEdges: 5000,
   darkMode: true,
-  fontSize: 12,
   sequence: {
     diagramMarginX: 20,
     diagramMarginY: 10,
@@ -120,6 +127,10 @@ mermaid.initialize({
   },
   theme: 'base',
   themeVariables: tmpThemeVariables,
+  // 统一字体，与页面一致
+  fontFamily:
+    'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+  fontSize: 14,
 })
 const methodStore = useMethodStore()
 const updateDrawerText = async (id, record) => {
@@ -193,6 +204,14 @@ watch(
   { immediate: true },
 )
 
+// 监听 record 变化，若 code 已存在则重绘（换记录时刷新可点标记）
+watch(
+  () => props.record,
+  () => {
+    if (props.mermaidCode) updateGraph()
+  },
+)
+
 // 交互：拖拽平移
 const onMouseDown = (e) => {
   if (e.button !== 0) return
@@ -244,9 +263,9 @@ const onWheel = (e) => {
   position: relative;
   width: 100%;
   height: 100vh; /* 占满可视高度 */
-  min-height: 100vh;
+  min-height: 480px; /* 与卡片最小高度保持一致 */
   overflow: hidden;
-  background: radial-gradient(circle at 25% 25%, #232323 0%, #1f1f1f 60%);
+  background: transparent; /* 无边界，使用页面背景 */
   cursor: grab;
   user-select: none;
 }
@@ -261,13 +280,16 @@ const onWheel = (e) => {
 
 .stage :deep(.messageText.clickable) {
   cursor: pointer;
-  fill: #69b1ff; /* 静态：可点击色（暗黑下的次强调） */
-  transition: fill 160ms ease;
+  fill: #10b981; /* 品牌色 */
+  font-weight: 600;
+  transition:
+    fill 0.2s ease,
+    text-decoration 0.2s ease;
 }
 
 .stage :deep(.messageText.clickable:hover) {
-  fill: #91caff; /* 悬浮：略微提亮 */
-  text-decoration: underline; /* 悬浮：下划线 */
+  fill: #34d399; /* 悬浮高亮 */
+  text-decoration: underline;
 }
 
 .placeholder {

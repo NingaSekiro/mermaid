@@ -1,85 +1,53 @@
 <template>
-  <div>
-    <a-checkbox
-      v-model:checked="state.checkAll"
-      :indeterminate="state.indeterminate"
-      @change="onCheckAllChange"
-    >
-      录制package
-    </a-checkbox>
-  </div>
-  <a-checkbox-group v-model:value="state.checkedList" :options="packageNames" />
-  <br />
-  <a-switch
-    v-model:checked="recording"
-    @change="doHandleClick"
-    checked-children="录制中"
-    un-checked-children="未录制"
-    :disabled="recordDisabled"
+  <RecordControl
+    :checkAll="state.checkAll"
+    :indeterminate="state.indeterminate"
+    :checkedList="state.checkedList"
+    :packageNames="packageNames"
+    :recording="recording"
+    :recordDisabled="recordDisabled"
+    @checkAllChange="onCheckAllChange"
+    @update:checkedList="state.checkedList = $event"
+    @update:recording="recording = $event; doHandleClick()"
   />
-  <a-layout class="main-layout" style="height: 100%">
-    <!-- 左侧侧边栏 -->
-    <a-layout-sider
-      width="320"
-      :style="{
-        overflow: 'auto',
-        backgroundColor: 'transparent',
-        borderTop: '1px solid rgba(255, 255, 255, 0.12)',
-        borderRight: '1px solid rgba(255, 255, 255, 0.12)',
-      }"
-    >
-      <a-list :data-source="recordResp.methodChains" :bordered="false" size="small">
-        <template #renderItem="{ item, index: itemIndex }">
-          <a-list-item
-            @click="updateMermaidCode(itemIndex)"
-            :style="{
-              cursor: 'pointer',
-              padding: '4px 0',
-            }"
-          >
-            <a-typography-text
-              :ellipsis="{ tooltip: true }"
-              style="display: block; width: 100%"
-              :content="item.message?item.message:item.threadName+' '+item.methodChain"
-            >
-            </a-typography-text>
-          </a-list-item>
-        </template>
-      </a-list>
-    </a-layout-sider>
-    <a-layout-content class="main-content">
-      <div
-        :style="{
-          padding: '24px',
-          borderTop: '1px solid rgba(255, 255, 255, 0.12)',
-        }"
-      >
-        <MermaidRenderer
-          v-if="mermaidCode"
-          :mermaid-code="mermaidCode"
-          :record="recordResp.record"
-        />
-        <div
-          v-else
-          style="height: 100%; display: flex; align-items: center; justify-content: center"
-        >
-          <a-empty description="请在录制后从左侧选择一个方法链查看图表" />
-        </div>
-      </div>
-    </a-layout-content>
-  </a-layout>
+
+<LayoutDual>
+  <template #panel>
+    <ChainPanel
+      :items="recordResp.methodChains"
+      :loading="loadingChains"
+      :selectedIndex="selectedIndex"
+      @select="onSelectChain"
+    />
+  </template>
+  <template #chart>
+    <ChartCard
+      :title="recordResp.record"
+      :mermaidCode="mermaidCode"
+      :record="recordResp.record"
+      :loading="loadingMermaid"
+      emptyText="请在录制后从左侧选择一个方法链查看图表"
+    />
+  </template>
+</LayoutDual>
 </template>
 
 <script setup>
 import { onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { useMethodStore } from '@/stores/useMethodStore.js'
 import { getInitConfig, mermaidAPI, recordAPI } from '@/apis/method.js'
-import MermaidRenderer from '@/components/MermaidRenderer.vue'
+import LayoutDual from '@/components/LayoutDual.vue'
+import ChartCard from '@/components/ChartCard.vue'
+import ChainPanel from '@/components/ChainPanel.vue'
+import RecordControl from '@/components/RecordControl.vue'
 
 const methodStore = useMethodStore()
 const recordResp = ref([])
 const mermaidCode = ref('')
 const timer = ref(null)
+const selectedIndex = ref(-1)
+const loadingChains = ref(false)
+const loadingMermaid = ref(false)
 // 是否禁用录制开关
 const recordDisabled = ref(false)
 const packageNames = ref([])
@@ -128,6 +96,7 @@ const startPolling = () => {
       }
       const res = await recordAPI(params)
       recordResp.value = res.data || []
+      loadingChains.value = false
       if (recordResp.value.code !== 0) {
         stopPolling()
         recordDisabled.value = true
@@ -163,20 +132,20 @@ const updateMermaidCode = async (index) => {
   if (index === undefined) {
     return
   }
+  loadingMermaid.value = true
+  selectedIndex.value = index
   const res = await mermaidAPI(
     recordResp.value.record,
     recordResp.value.methodChains[index].callChainId,
   )
   mermaidCode.value = res.data.mermaidCode
+  loadingMermaid.value = false
 }
 
-const doHandleClick = async () => {
-  if (recording.value) {
-    startPolling()
-  } else {
-    // 停止录制
-    await stopPolling()
-  }
+const onSelectChain = (index) => updateMermaidCode(index)
+
+const doHandleClick = () => {
+  recording.value ? startPolling() : stopPolling()
 }
 </script>
 

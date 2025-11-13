@@ -1,10 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import {
-  getMethodChainsAPI,
-  getMethodRecordsAPI,
-  mermaidAPI, methodDetailAPI
-} from '@/apis/method.js'
+import { getMethodChainsAPI, getMethodRecordsAPI, mermaidAPI, methodDetailAPI } from '@/apis/method.js'
 
 export const useMethodStore = defineStore('method', () => {
   const projectId = ref()

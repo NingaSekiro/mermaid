@@ -1,98 +1,101 @@
 <template>
-  <a-layout class="main-layout" style="height: 100%">
-    <!-- 左侧侧边栏 -->
-    <a-layout-sider
-      width="320"
-      :style="{
-        overflow: 'auto',
-        backgroundColor: 'transparent',
-        borderRight: '1px solid rgba(255, 255, 255, 0.12)',
-      }"
-    >
-      <div style="padding: 16px">
-        <a-collapse v-model:activeKey="activeOutKey" @change="updateMethodChains(activeOutKey)">
-          <a-collapse-panel v-for="(record, index) in methodStore.methodRecords" :key="index">
-            <template #header>
-              <a-typography-text :ellipsis="{ tooltip: true }" :content="record">
-              </a-typography-text>
-            </template>
-            <a-list :data-source="methodStore.methodChains" :bordered="false" size="small">
-              <template #renderItem="{ item, index: itemIndex }">
-                <a-list-item
-                  @click="updateMermaidCode(itemIndex, index)"
-                  :style="{
-                    cursor: 'pointer',
-                    padding: '4px 0',
-                  }"
-                >
-                  <a-typography-text
-                    :ellipsis="{ tooltip: true }"
-                    style="display: block; width: 100%"
-                    :content="item.message?item.message:item.threadName+' '+item.methodChain"
-                  >
-                  </a-typography-text>
-                </a-list-item>
-              </template>
-            </a-list>
-          </a-collapse-panel>
-        </a-collapse>
-      </div>
-    </a-layout-sider>
-
-    <!-- 主内容区域 -->
-    <a-layout-content class="main-content">
-      <div
-        :style="{
-          padding: '24px',
-        }"
-      >
-        <MermaidRenderer
-          v-if="methodStore.mermaidCode"
-          :mermaidCode="methodStore.mermaidCode"
-          :record="record"
-        />
-        <div
-          v-else
-          style="height: 100%; display: flex; align-items: center; justify-content: center"
-        >
-          <a-empty description="请从左侧选择一个方法链查看图表" />
-        </div>
-      </div>
-    </a-layout-content>
-  </a-layout>
+  <LayoutDual>
+    <template #panel>
+      <a-collapse v-model:activeKey="activeOutKey" @change="updateMethodChains">
+        <a-collapse-panel v-for="(rec, idx) in methodStore.methodRecords" :key="idx">
+          <template #header>
+            <a-typography-text :ellipsis="{ tooltip: true }" :content="rec" />
+          </template>
+          <ChainPanel
+            :items="methodStore.methodChains"
+            :loading="loadingChains"
+            :selectedIndex="selectedIndex"
+            @select="onSelectChain"
+          />
+        </a-collapse-panel>
+      </a-collapse>
+    </template>
+    <template #chart>
+      <ChartCard
+        :title="record || '方法链图表'"
+        :mermaidCode="methodStore.mermaidCode"
+        :record="record"
+        :loading="loadingMermaid"
+        emptyText="请从左侧选择一个方法链查看图表"
+      />
+    </template>
+  </LayoutDual>
 </template>
 
 <script setup>
 import { onMounted, ref } from 'vue'
 import { useMethodStore } from '@/stores/useMethodStore.js'
-import MermaidRenderer from '@/components/MermaidRenderer.vue'
+import LayoutDual from '@/components/LayoutDual.vue'
+import ChartCard from '@/components/ChartCard.vue'
+import ChainPanel from '@/components/ChainPanel.vue'
 
 const activeOutKey = ref([])
 const methodStore = useMethodStore()
 const record = ref('')
+const loadingRecords = ref(false)
+const loadingChains = ref(false)
+const loadingMermaid = ref(false)
+const selectedIndex = ref(-1)
 
 onMounted(() => {
   updateMethodRecords()
 })
 
 const updateMethodRecords = async () => {
-  await methodStore.getMethodRecords()
+  loadingRecords.value = true
+  try {
+    await methodStore.getMethodRecords()
+    if (Array.isArray(methodStore.methodRecords) && methodStore.methodRecords.length > 0) {
+      activeOutKey.value = [0]
+      await updateMethodChains([0])
+    }
+  } finally {
+    loadingRecords.value = false
+  }
 }
 
-const updateMethodChains = async (item) => {
-  if (item === undefined || item.length === 0) {
+const updateMethodChains = async (keys) => {
+  if (keys === undefined || keys.length === 0) {
     return
   }
-  await methodStore.getMethodChains(methodStore.methodRecords[item[0]])
+  loadingChains.value = true
+  try {
+    record.value = methodStore.methodRecords[keys[0]]
+    await methodStore.getMethodChains(record.value)
+    selectedIndex.value = -1
+  } finally {
+    loadingChains.value = false
+  }
 }
 
-const updateMermaidCode = async (index, recordIndex) => {
-  if (index === undefined || recordIndex === undefined) {
-    return
-  }
-  record.value = methodStore.methodRecords[recordIndex]
-  await methodStore.getMermaidCode(record.value, methodStore.methodChains[index].callChainId)
+const onSelectChain = (index) => {
+  if (index === undefined) return
+  selectedIndex.value = index
+  loadingMermaid.value = true
+  methodStore
+    .getMermaidCode(record.value, methodStore.methodChains[index].callChainId)
+    .finally(() => (loadingMermaid.value = false))
 }
 </script>
 
-<style scoped></style>
+<style scoped>
+:deep(.ant-collapse) {
+  background: transparent;
+  border: none;
+}
+:deep(.ant-collapse-item) {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+:deep(.ant-collapse-header) {
+  padding: 8px 10px !important;
+  border-radius: 6px;
+}
+:deep(.ant-collapse-header:hover) {
+  background: rgba(255, 255, 255, 0.04);
+}
+</style>

@@ -1,5 +1,12 @@
 <template>
-  <a-menu v-model:selectedKeys="current" mode="horizontal" :items="items" @click="doMenuClick" />
+  <a-menu
+    v-model:selectedKeys="current"
+    mode="horizontal"
+    theme="dark"
+    :items="items"
+    @click="doMenuClick"
+    style="background: transparent; border-bottom: none"
+  />
 </template>
 <script setup>
 import { h, ref } from 'vue'
@@ -30,4 +37,8 @@ const items = ref([
 ])
 </script>
 
-<style scoped></style>
+<style scoped>
+:deep(.ant-menu-dark.ant-menu-horizontal) {
+  border-bottom: none;
+}
+</style>
