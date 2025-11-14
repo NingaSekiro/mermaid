@@ -15,7 +15,7 @@
     @mouseup="onMouseUp"
     @mouseleave="onMouseUp"
     @mousemove="onMouseMove"
-    @wheel.prevent="onWheel"
+    @wheel.passive="onWheel"
   >
     <div class="stage" :style="transformStyle" v-html="mermaidSvg"></div>
   </div>
@@ -42,49 +42,43 @@
           <span class="mono">{{ methodStore.methodDetail.id ?? '-' }}</span>
         </a-descriptions-item>
         <a-descriptions-item label="调用链ID">
-          <span class="mono">{{ methodStore.methodDetail.callChainId ?? '-' }}</span>
+          <span class="mono">{{ (methodStore.methodDetail as any).callChainId || '-' }}</span>
         </a-descriptions-item>
       </a-descriptions>
     </a-skeleton>
   </a-drawer>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue'
 import mermaid from 'mermaid'
-import { useMethodStore } from '@/stores/useMethodStore.js'
+import { useMethodStore } from '@/stores/useMethodStore'
 
 // 定义 props
-const props = defineProps({
-  mermaidCode: {
-    type: String,
-    default: '',
-  },
-  record: {
-    type: String,
-    default: '',
-  },
-})
+const props = defineProps<{
+  mermaidCode: string
+  record: string
+}>()
 
 // 组件状态
-const mermaidSvg = ref('')
-const error = ref('')
+const mermaidSvg = ref<string>('')
+const error = ref<string>('')
 
 // 抽屉状态
-const drawerOpen = ref(false)
-const drawerText = ref('')
-const detailLoading = ref(false)
+const drawerOpen = ref<boolean>(false)
+const drawerText = ref<string>('')
+const detailLoading = ref<boolean>(false)
 
 // 画布交互状态
-const canvasRef = ref(null)
-const scale = ref(1)
-const translateX = ref(0)
-const translateY = ref(0)
-const isPanning = ref(false)
-const panStartX = ref(0)
-const panStartY = ref(0)
-const panOriginX = ref(0)
-const panOriginY = ref(0)
+const canvasRef = ref<HTMLDivElement | null>(null)
+const scale = ref<number>(1)
+const translateX = ref<number>(0)
+const translateY = ref<number>(0)
+const isPanning = ref<boolean>(false)
+const panStartX = ref<number>(0)
+const panStartY = ref<number>(0)
+const panOriginX = ref<number>(0)
+const panOriginY = ref<number>(0)
 
 const transformStyle = computed(() => ({
   transform: `translate(${translateX.value}px, ${translateY.value}px) scale(${scale.value})`,
@@ -133,7 +127,7 @@ mermaid.initialize({
   fontSize: 14,
 })
 const methodStore = useMethodStore()
-const updateDrawerText = async (id, record) => {
+const updateDrawerText = async (id: string, record: string): Promise<void> => {
   try {
     detailLoading.value = true
     await methodStore.getMethodDetail(id, record)
@@ -142,7 +136,7 @@ const updateDrawerText = async (id, record) => {
   }
 }
 // 更新图表
-const updateGraph = async () => {
+const updateGraph = async (): Promise<void> => {
   try {
     if (!props.mermaidCode) {
       mermaidSvg.value = ''
@@ -189,7 +183,7 @@ const updateGraph = async () => {
         })
       })
     })
-  } catch (err) {
+  } catch (err: any) {
     console.error(err)
     error.value = err.message || '渲染失败'
   }
@@ -213,7 +207,7 @@ watch(
 )
 
 // 交互：拖拽平移
-const onMouseDown = (e) => {
+const onMouseDown = (e: MouseEvent): void => {
   if (e.button !== 0) return
   isPanning.value = true
   panStartX.value = e.clientX
@@ -222,7 +216,7 @@ const onMouseDown = (e) => {
   panOriginY.value = translateY.value
 }
 
-const onMouseMove = (e) => {
+const onMouseMove = (e: MouseEvent): void => {
   if (!isPanning.value) return
   const dx = e.clientX - panStartX.value
   const dy = e.clientY - panStartY.value
@@ -230,13 +224,13 @@ const onMouseMove = (e) => {
   translateY.value = panOriginY.value + dy
 }
 
-const onMouseUp = () => {
+const onMouseUp = (): void => {
   isPanning.value = false
 }
 
 // 交互：滚轮缩放（以光标为中心）
-const clamp = (val, min, max) => Math.min(Math.max(val, min), max)
-const onWheel = (e) => {
+const clamp = (val: number, min: number, max: number): number => Math.min(Math.max(val, min), max)
+const onWheel = (e: WheelEvent): void => {
   const container = canvasRef.value
   if (!container) return
 

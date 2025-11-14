@@ -17,7 +17,7 @@
   </a-config-provider>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { theme } from 'ant-design-vue';
 import BasicLayout from '@/layouts/BasicLayout.vue'
 </script>

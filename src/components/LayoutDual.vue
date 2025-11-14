@@ -39,28 +39,28 @@
   
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
 import { LeftOutlined, RightOutlined } from '@ant-design/icons-vue'
 
-const siderWidth = ref(320)
-const isResizing = ref(false)
-const startX = ref(0)
-const startWidth = ref(320)
+const siderWidth = ref<number>(320)
+const isResizing = ref<boolean>(false)
+const startX = ref<number>(0)
+const startWidth = ref<number>(320)
 const minWidth = 240
 const maxWidth = 640
-const siderVisible = ref(true)
-const savedWidth = ref(320)
+const siderVisible = ref<boolean>(true)
+const savedWidth = ref<number>(320)
 
-const onResizeStart = (e) => {
+const onResizeStart = (e: MouseEvent): void => {
   isResizing.value = true
   startX.value = e.clientX
   startWidth.value = siderWidth.value
-  window.addEventListener('mousemove', onResizing)
-  window.addEventListener('mouseup', onResizeEnd)
+  window.addEventListener('mousemove', onResizing, { passive: true })
+  window.addEventListener('mouseup', onResizeEnd, { passive: true })
 }
 
-const onResizing = (e) => {
+const onResizing = (e: MouseEvent): void => {
   if (!isResizing.value) return
   const dx = e.clientX - startX.value
   let next = startWidth.value + dx
@@ -68,13 +68,13 @@ const onResizing = (e) => {
   siderWidth.value = next
 }
 
-const onResizeEnd = () => {
+const onResizeEnd = (): void => {
   isResizing.value = false
-  window.removeEventListener('mousemove', onResizing)
-  window.removeEventListener('mouseup', onResizeEnd)
+  window.removeEventListener('mousemove', onResizing, { passive: true } as any)
+  window.removeEventListener('mouseup', onResizeEnd, { passive: true } as any)
 }
 
-const toggleSider = () => {
+const toggleSider = (): void => {
   if (siderVisible.value) {
     savedWidth.value = siderWidth.value
     siderVisible.value = false
@@ -84,7 +84,7 @@ const toggleSider = () => {
   }
 }
 
-const getTooltipContainer = (triggerNode) => triggerNode?.parentElement || document.body
+const getTooltipContainer = (triggerNode: HTMLElement): HTMLElement => triggerNode?.parentElement || document.body
 </script>
 
 <style scoped>

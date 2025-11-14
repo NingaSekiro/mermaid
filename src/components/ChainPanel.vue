@@ -4,22 +4,28 @@
       <MethodChainList
         :items="items"
         :selectedIndex="selectedIndex"
+        :loading="loading"
         @select="onSelect"
       />
     </a-spin>
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import MethodChainList from '@/components/MethodChainList.vue'
+import type { MethodChainResponse } from '@/types/api.types.ts'
 
-defineProps({
-  items: Array,
-  loading: Boolean,
-  selectedIndex: { type: Number, default: -1 }
-})
-const emit = defineEmits(['select'])
-const onSelect = (idx) => emit('select', idx)
+defineProps<{
+  items: MethodChainResponse[]
+  loading: boolean
+  selectedIndex: number
+}>()
+
+const emit = defineEmits<{
+  select: [index: number]
+}>()
+
+const onSelect = (idx: number): void => emit('select', idx)
 </script>
 
 <style scoped>

@@ -16,15 +16,29 @@
   </a-spin>
 </template>
 
-<script setup>
-const props = defineProps({
-  items: { type: Array, default: () => [] },
-  selectedIndex: { type: Number, default: -1 },
-  loading: { type: Boolean, default: false },
-})
-const emit = defineEmits(['select'])
-const onSelect = (index) => emit('select', index)
-const displayText = (item) => item?.message || `${item?.threadName || ''} ${item?.methodChain || ''}`
+<script setup lang="ts">
+import type { MethodChainResponse } from '@/types/api.types.ts'
+
+defineProps<{
+  items: MethodChainResponse[]
+  selectedIndex: number
+  loading: boolean
+}>()
+
+const emit = defineEmits<{
+  select: [index: number]
+}>()
+
+const onSelect = (index: number): void => emit('select', index)
+const displayText = (item: MethodChainResponse): string => {
+  // 如果 message 存在且不为 null，优先使用 message
+  if (item?.message) {
+    return item.message
+  }
+  const threadName = item?.threadName || ''
+  const methodChain = item?.methodChain || ''
+  return `${threadName} ${methodChain}`.trim() || 'Unknown Method'
+}
 </script>
 
 <style scoped>

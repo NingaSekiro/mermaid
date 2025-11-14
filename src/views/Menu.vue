@@ -8,20 +8,25 @@
     style="background: transparent; border-bottom: none"
   />
 </template>
-<script setup>
+<script setup lang="ts">
 import { h, ref } from 'vue'
-import { HomeOutlined, AppstoreOutlined, SettingOutlined } from '@ant-design/icons-vue'
+import { HomeOutlined, AppstoreOutlined } from '@ant-design/icons-vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
-const doMenuClick = ({key}) => {
+const doMenuClick = ({key}: {key: string}): void => {
   router.push({
     path: key,
   })
 }
 
-const current = ref(['mail'])
-const items = ref([
+const current = ref<string[]>(['mail'])
+const items = ref<{
+  key: string
+  icon: () => any
+  label: string
+  title: string
+}[]>([
   {
     key: '/',
     icon: () => h(HomeOutlined),

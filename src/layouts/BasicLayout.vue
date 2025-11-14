@@ -8,7 +8,7 @@
     </a-layout-content>
   </a-layout>
 </template>
-<script setup>
+<script setup lang="ts">
 import Menu from '@/views/Menu.vue'
 </script>
 

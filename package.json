@@ -12,7 +12,11 @@
     "preview": "vite preview",
     "format": "prettier --write src/",
     "test": "vitest",
-    "test:coverage": "vitest --coverage"
+    "test:coverage": "vitest --coverage",
+    "type-check": "vue-tsc --noEmit",
+    "type-check:watch": "vue-tsc --noEmit --watch",
+    "lint": "eslint src --ext .ts,.vue --fix",
+    "lint:check": "eslint src --ext .ts,.vue"
   },
   "dependencies": {
     "ant-design-vue": "^4.2.6",

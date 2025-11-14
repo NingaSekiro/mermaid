@@ -13,16 +13,16 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import MermaidRenderer from '@/components/MermaidRenderer.vue'
 
-defineProps({
-  title: String,
-  mermaidCode: String,
-  record: String,
-  loading: Boolean,
-  emptyText: { type: String, default: '请从左侧选择一个方法链查看图表' }
-})
+defineProps<{
+  title: string
+  mermaidCode: string
+  record: string
+  loading: boolean
+  emptyText?: string
+}>()
 </script>
 
 <style scoped>
