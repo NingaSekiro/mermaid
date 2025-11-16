@@ -1,13 +1,15 @@
 <template>
   <RecordControl
-    :checkAll="state.checkAll"
-    :indeterminate="state.indeterminate"
-    :checkedList="state.checkedList"
-    :packageNames="packageNames"
+    :checkAll="settingStore.checkAll"
+    :indeterminate="settingStore.indeterminate"
+    :checkedList="settingStore.checkedList"
+    :packageNames="settingStore.packageNames"
     :recording="recording"
-    :recordDisabled="recordDisabled"
+    :recordDisabled="settingStore.recordDisabled"
+    :showSettings="false"
+    :showSwitch="true"
     @checkAllChange="onCheckAllChange"
-    @update:checkedList="state.checkedList = $event"
+    @update:checkedList="settingStore.setCheckedList($event)"
     @update:recording="recording = $event; doHandleClick()"
   />
 
@@ -33,36 +35,25 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, reactive, ref, watch } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 import { useMethodStore } from '@/stores/useMethodStore'
-import { getInitConfig, mermaidAPI, recordAPI } from '@/apis/method'
+import { mermaidAPI, recordAPI } from '@/apis/method'
 import LayoutDual from '@/components/LayoutDual.vue'
 import ChartCard from '@/components/ChartCard.vue'
 import ChainPanel from '@/components/ChainPanel.vue'
 import RecordControl from '@/components/RecordControl.vue'
 import type { MethodRecordResponse } from '@/types/api.types.ts'
+import { useRecordSettingStore } from '@/stores/useRecordSettingStore'
 
 const methodStore = useMethodStore()
+const settingStore = useRecordSettingStore()
 const recordResp = ref<MethodRecordResponse>({ record: '', methodChains: [], code: 0 })
 const mermaidCode = ref<string>('')
 const timer = ref<NodeJS.Timeout | null>(null)
 const selectedIndex = ref<number>(-1)
 const loadingChains = ref<boolean>(false)
 const loadingMermaid = ref<boolean>(false)
-// 是否禁用录制开关
-const recordDisabled = ref<boolean>(false)
-const packageNames = ref<string[]>([])
-// 是否选中录制开关
 const recording = ref<boolean>(false)
-const state = reactive<{
-  indeterminate: boolean
-  checkAll: boolean
-  checkedList: string[]
-}>({
-  indeterminate: false,
-  checkAll: true,
-  checkedList: [],
-})
 
 onMounted(async () => {
   if (!methodStore.projectId) {
@@ -73,30 +64,19 @@ onMounted(async () => {
     })
     methodStore.setProjectId(paramsObject.projectId || '')
   }
-  const res = await getInitConfig(methodStore.projectId || '')
-  // 初始化选中所有package
-  state.checkedList = res.data.packageNames || []
-  packageNames.value = res.data.packageNames || []
-  recordDisabled.value = !res.data.status
+  await settingStore.init(methodStore.projectId || '')
 })
 
 onUnmounted(() => {
   stopPolling()
 })
-watch(
-  () => state.checkedList,
-  (val) => {
-    state.indeterminate = !!val.length && val.length < packageNames.value.length
-    state.checkAll = val.length === packageNames.value.length
-  },
-)
 
 const startPolling = (): void => {
   timer.value = setInterval(async () => {
     try {
       const params = {
         projectId: methodStore.projectId || '',
-        config: state.checkedList,
+        config: settingStore.effectiveCheckedList,
         start: true
       }
       const res = await recordAPI(params)
@@ -114,7 +94,7 @@ const startPolling = (): void => {
       loadingChains.value = false
       if (recordResp.value.code !== 0) {
         await stopPolling()
-        recordDisabled.value = true
+        settingStore.recordDisabled = true
         recording.value = false
       }
     } catch (error) {
@@ -127,21 +107,18 @@ const stopPolling = async (): Promise<void> => {
   if (timer.value) {
     clearInterval(timer.value)
     timer.value = null
-    const params = {
-      projectId: methodStore.projectId || '',
-      config: state.checkedList,
-      start: false
-    }
-    await recordAPI(params)
+  const params = {
+    projectId: methodStore.projectId || '',
+    config: settingStore.effectiveCheckedList,
+    start: false
+  }
+  await recordAPI(params)
   }
 }
 
 const onCheckAllChange = (e: Event): void => {
   const target = e.target as HTMLInputElement
-  Object.assign(state, {
-    checkedList: target.checked ? packageNames.value : [],
-    indeterminate: false,
-  })
+  settingStore.setCheckAll(target.checked)
 }
 
 const updateMermaidCode = async (index: number): Promise<void> => {
