@@ -41,6 +41,7 @@ const loadingRecords = ref<boolean>(false)
 const loadingChains = ref<boolean>(false)
 const loadingMermaid = ref<boolean>(false)
 const selectedIndex = ref<number>(-1)
+const lastActiveKeys = ref<number[]>([])
 
 onMounted(() => {
   // 确保projectId已设置，如果没有则从URL获取
@@ -74,7 +75,8 @@ const updateMethodChains = async (keys: number[]): Promise<void> => {
   }
   loadingChains.value = true
   try {
-    const selectedRecord = methodStore.methodRecords[keys[0]]
+    const newKey = keys.find((k) => !lastActiveKeys.value.includes(k)) ?? keys[keys.length - 1]
+    const selectedRecord = methodStore.methodRecords[newKey]
     if (selectedRecord) {
       // selectedRecord是字符串，直接作为record参数
       record.value = selectedRecord
@@ -84,6 +86,7 @@ const updateMethodChains = async (keys: number[]): Promise<void> => {
   } finally {
     loadingChains.value = false
   }
+  lastActiveKeys.value = [...keys]
 }
 
 const onSelectChain = (index: number): void => {
@@ -116,6 +119,8 @@ const onSelectChain = (index: number): void => {
     .getMermaidCode(record.value, callChainId)
     .finally(() => (loadingMermaid.value = false))
 }
+
+defineExpose({ updateMethodChains })
 </script>
 
 <style scoped>
