@@ -7,10 +7,10 @@
             <a-typography-text :ellipsis="{ tooltip: true }" :content="rec" />
           </template>
           <ChainPanel
-            :items="methodStore.methodChains"
+            :items="chainsByRecord[rec] || []"
             :loading="loadingChains"
             :selectedIndex="selectedIndex"
-            @select="onSelectChain"
+            @select="(i) => onSelectChain(rec, i)"
           />
         </a-collapse-panel>
       </a-collapse>
@@ -42,6 +42,7 @@ const loadingChains = ref<boolean>(false)
 const loadingMermaid = ref<boolean>(false)
 const selectedIndex = ref<number>(-1)
 const lastActiveKeys = ref<number[]>([])
+const chainsByRecord = ref<Record<string, any[]>>({})
 
 onMounted(() => {
   // 确保projectId已设置，如果没有则从URL获取
@@ -69,54 +70,48 @@ const updateMethodRecords = async (): Promise<void> => {
   }
 }
 
-const updateMethodChains = async (keys: number[]): Promise<void> => {
-  if (keys === undefined || keys.length === 0) {
+const updateMethodChains = async (keys: any): Promise<void> => {
+  if (keys === undefined || (Array.isArray(keys) && keys.length === 0)) {
+    return
+  }
+  const arr = Array.isArray(keys) ? keys : [keys]
+  const curr = arr.map((k) => Number(k))
+  // 仅在新增展开时触发请求；关闭或相同集合不请求
+  const opened = curr.filter((k) => !lastActiveKeys.value.includes(k))
+  if (opened.length === 0) {
+    lastActiveKeys.value = curr
+    return
+  }
+  const newKey = opened[0]
+  const selectedRecord = methodStore.methodRecords[newKey]
+  if (!selectedRecord) {
+    lastActiveKeys.value = curr
     return
   }
   loadingChains.value = true
   try {
-    const newKey = keys.find((k) => !lastActiveKeys.value.includes(k)) ?? keys[keys.length - 1]
-    const selectedRecord = methodStore.methodRecords[newKey]
-    if (selectedRecord) {
-      // selectedRecord是字符串，直接作为record参数
-      record.value = selectedRecord
-      await methodStore.getMethodChains(selectedRecord)
-      selectedIndex.value = -1
-    }
+    record.value = selectedRecord
+    await methodStore.getMethodChains(selectedRecord)
+    chainsByRecord.value[selectedRecord] = Array.isArray(methodStore.methodChains)
+      ? [...methodStore.methodChains]
+      : []
+    selectedIndex.value = -1
   } finally {
     loadingChains.value = false
+    lastActiveKeys.value = curr
   }
-  lastActiveKeys.value = [...keys]
 }
 
-const onSelectChain = (index: number): void => {
-  if (index === undefined) return
+const onSelectChain = (rec: string, index: number): void => {
+  if (index === undefined || !rec) return
   selectedIndex.value = index
   loadingMermaid.value = true
-
-  const chainItem = methodStore.methodChains[index]
-
-  // 调试信息：查看实际数据结构
-  console.log('Selected chain item from Home:', chainItem)
-  console.log('callChainId:', chainItem?.callChainId)
-  console.log('id:', chainItem?.id)
-
-  // 修复：确保 callChainId 有有效值
-  let callChainId = chainItem?.callChainId || chainItem?.id || 0
-
-  // 如果 callChainId 是 0 或者无效值，尝试使用其他可能的字段
-  if (!callChainId || callChainId === 0) {
-    // 尝试使用 methodChain 或其他唯一标识符
-    const methodChain =
-      chainItem?.methodChain?.toString() || chainItem?.threadName || index.toString()
-    // 将字符串转换为数字，如果无法转换则使用索引
-    callChainId = parseInt(methodChain) || index
-  }
-
-  console.log('Final callChainId from Home:', callChainId)
-
+  const list = chainsByRecord.value[rec] || []
+  const chainItem = list[index]
+  const callChainId = Number(chainItem?.callChainId)
+  record.value = rec
   methodStore
-    .getMermaidCode(record.value, callChainId)
+    .getMermaidCode(rec, callChainId)
     .finally(() => (loadingMermaid.value = false))
 }
 
