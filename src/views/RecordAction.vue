@@ -25,7 +25,7 @@
   <template #chart>
     <ChartCard
       :title="recordResp.record"
-      :mermaidCode="mermaidCode"
+      :mermaidResponse="mermaidCode"
       :record="recordResp.record"
       :loading="loadingMermaid"
       emptyText="请在录制后从左侧选择一个方法链查看图表"
@@ -42,13 +42,13 @@ import LayoutDual from '@/components/LayoutDual.vue'
 import ChartCard from '@/components/ChartCard.vue'
 import ChainPanel from '@/components/ChainPanel.vue'
 import RecordControl from '@/components/RecordControl.vue'
-import type { MethodRecordResponse } from '@/types/api.types.ts'
+import type { MermaidResponse, MethodRecordResponse } from '@/types/api.types.ts'
 import { useRecordSettingStore } from '@/stores/useRecordSettingStore'
 
 const methodStore = useMethodStore()
 const settingStore = useRecordSettingStore()
 const recordResp = ref<MethodRecordResponse>({ record: '', methodChains: [], code: 0 })
-const mermaidCode = ref<string>('')
+const mermaidCode = ref<MermaidResponse>()
 const timer = ref<NodeJS.Timeout | null>(null)
 const selectedIndex = ref<number>(-1)
 const loadingChains = ref<boolean>(false)
@@ -142,11 +142,11 @@ const updateMermaidCode = async (index: number): Promise<void> => {
   
   console.log('Final callChainId from RecordAction:', callChainId)
   
-  const res = await mermaidAPI(
-    recordResp.value.record,
+  const res = await mermaidAPI({
+    record: recordResp.value.record,
     callChainId,
-  )
-  mermaidCode.value = res.data.mermaidCode || res.data.code
+  })
+  mermaidCode.value = res.data
   loadingMermaid.value = false
 }
 

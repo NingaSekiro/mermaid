@@ -1,15 +1,13 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { 
-  getMethodChainsAPI, 
-  getMethodRecordsAPI, 
-  mermaidAPI, 
-  methodDetailAPI 
+import {
+  getMethodChainsAPI,
+  getMethodRecordsAPI,
+  mermaidAPI,
+  methodDetailAPI,
 } from '@/apis/method.js'
-import type { 
-  MethodChainResponse, 
-  MethodDetailResponse 
-} from '@/types/api.types.ts'
+import type { MethodChainResponse, MethodDetailResponse } from '@/types/api.types.ts'
+import { MermaidResponse } from '@/types/api.types.ts'
 
 export const useMethodStore = defineStore('method', () => {
   const projectId = ref<string>()
@@ -37,10 +35,17 @@ export const useMethodStore = defineStore('method', () => {
     }
   }
 
-  const mermaidCode = ref<string>('')
-  const getMermaidCode = async (record: string, callChainId: number): Promise<void> => {
-    const res = await mermaidAPI(record, callChainId)
-    mermaidCode.value = res.data.mermaidCode || res.data.code
+  const mermaidResponse = ref<MermaidResponse>()
+  const getMermaidCode = async (
+    record: string,
+    callChainId: number,
+
+  ): Promise<void> => {
+    const res = await mermaidAPI({
+      record,
+      callChainId,
+    })
+    mermaidResponse.value = res.data
   }
 
   /**
@@ -57,7 +62,7 @@ export const useMethodStore = defineStore('method', () => {
   return {
     projectId,
     setProjectId,
-    mermaidCode,
+    mermaidResponse,
     getMermaidCode,
     methodRecords,
     getMethodRecords,

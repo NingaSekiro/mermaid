@@ -2,13 +2,13 @@
   <div v-if="error" class="error-message">
     <a-alert type="error">
       <template #message>
-        <div style="white-space: pre-wrap">{{ mermaidCode }}</div>
+        <div style="white-space: pre-wrap">{{ mermaidResponse?.mermaidCode }}</div>
       </template>
     </a-alert>
     {{ error }}
   </div>
   <div
-    v-else-if="mermaidCode"
+    v-else-if="mermaidResponse?.mermaidCode"
     class="canvas"
     ref="canvasRef"
     @mousedown="onMouseDown"
@@ -20,43 +20,17 @@
     <div class="stage" :style="transformStyle" v-html="mermaidSvg"></div>
   </div>
   <div v-else class="placeholder">图表将在这里显示</div>
-  <a-drawer v-model:open="drawerOpen" placement="right" :width="480" :title="drawerText">
-    <a-skeleton active :loading="detailLoading">
-      <a-descriptions bordered :column="1" size="small">
-        <a-descriptions-item label="方法名">
-          <span class="code-text">{{ methodStore.methodDetail.method || '-' }}</span>
-        </a-descriptions-item>
-        <a-descriptions-item label="参数">
-          <pre class="code-block">{{ methodStore.methodDetail.args || '-' }}</pre>
-        </a-descriptions-item>
-        <a-descriptions-item label="返回值">
-          <pre class="code-block">{{ methodStore.methodDetail.returnValue || '-' }}</pre>
-        </a-descriptions-item>
-        <a-descriptions-item label="目标对象">
-          <span class="mono">{{ methodStore.methodDetail.target || '-' }}</span>
-        </a-descriptions-item>
-        <a-descriptions-item label="时间戳">
-          <span class="mono">{{ methodStore.methodDetail.timestamp || '-' }}</span>
-        </a-descriptions-item>
-        <a-descriptions-item label="记录ID">
-          <span class="mono">{{ methodStore.methodDetail.id ?? '-' }}</span>
-        </a-descriptions-item>
-        <a-descriptions-item label="调用链ID">
-          <span class="mono">{{ (methodStore.methodDetail as any).callChainId || '-' }}</span>
-        </a-descriptions-item>
-      </a-descriptions>
-    </a-skeleton>
-  </a-drawer>
 </template>
 
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue'
 import mermaid from 'mermaid'
 import { useMethodStore } from '@/stores/useMethodStore'
+import type { MermaidResponse } from '@/types/api.types.ts'
 
 // 定义 props
 const props = defineProps<{
-  mermaidCode: string
+  mermaidResponse: MermaidResponse | undefined
   record: string
 }>()
 
@@ -65,9 +39,7 @@ const mermaidSvg = ref<string>('')
 const error = ref<string>('')
 
 // 抽屉状态
-const drawerOpen = ref<boolean>(false)
-const drawerText = ref<string>('')
-const detailLoading = ref<boolean>(false)
+
 
 // 画布交互状态
 const canvasRef = ref<HTMLDivElement | null>(null)
@@ -127,18 +99,11 @@ mermaid.initialize({
   fontSize: 14,
 })
 const methodStore = useMethodStore()
-const updateDrawerText = async (id: string, record: string): Promise<void> => {
-  try {
-    detailLoading.value = true
-    await methodStore.getMethodDetail(id, record)
-  } finally {
-    detailLoading.value = false
-  }
-}
+
 // 更新图表
 const updateGraph = async (): Promise<void> => {
   try {
-    if (!props.mermaidCode) {
+    if (!props.mermaidResponse?.mermaidCode) {
       mermaidSvg.value = ''
       error.value = ''
       return
@@ -146,7 +111,7 @@ const updateGraph = async (): Promise<void> => {
 
     console.log('start update')
     // 不同id 回去时组件不用重新update，同时还保留有原本的dom
-    const { svg } = await mermaid.render('graphDiv-' + Date.now(), props.mermaidCode)
+    const { svg } = await mermaid.render('graphDiv-' + Date.now(), props.mermaidResponse.mermaidCode)
     mermaidSvg.value = svg
     // 渲染后重置视图
     scale.value = 1
@@ -191,7 +156,7 @@ const updateGraph = async (): Promise<void> => {
 
 // 监听 mermaidCode 变化并重新渲染
 watch(
-  () => props.mermaidCode,
+  () => props.mermaidResponse?.mermaidCode,
   () => {
     updateGraph()
   },
@@ -202,7 +167,7 @@ watch(
 watch(
   () => props.record,
   () => {
-    if (props.mermaidCode) updateGraph()
+    if (props.mermaidResponse?.mermaidCode) updateGraph()
   },
 )
 
@@ -240,7 +205,7 @@ const onWheel = (e: WheelEvent): void => {
 
   const zoomIntensity = 0.1
   const wheel = e.deltaY < 0 ? 1 : -1
-  const newScale = clamp(scale.value * (1 + wheel * zoomIntensity), 0.1, 8)
+  const newScale = clamp(scale.value * (1 + wheel * zoomIntensity), 0.1, 20)
 
   // 将光标下的点保持不动
   const worldX = (mouseX - translateX.value) / scale.value

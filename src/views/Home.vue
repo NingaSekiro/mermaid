@@ -18,7 +18,7 @@
     <template #chart>
       <ChartCard
         :title="record || '方法链图表'"
-        :mermaidCode="methodStore.mermaidCode"
+        :mermaidResponse="methodStore.mermaidResponse"
         :record="record"
         :loading="loadingMermaid"
         emptyText="请从左侧选择一个方法链查看图表"

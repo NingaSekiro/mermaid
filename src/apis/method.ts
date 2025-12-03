@@ -1,11 +1,11 @@
 import request from '@/util/http'
-import type { 
-  MethodChainResponse, 
-  MermaidResponse, 
+import type {
+  MethodChainResponse,
+  MermaidResponse,
   MethodDetailResponse,
   InitConfigResponse,
   RecordResponse,
-  RecordRequest
+  RecordRequest, MermaidRequest
 } from '@/types/api.types.ts'
 
 export const getMethodRecordsAPI = (projectId: string): Promise<{ data: string[] }> => {
@@ -24,11 +24,11 @@ export const getMethodChainsAPI = (record: string): Promise<{ data: MethodChainR
   })
 }
 
-export const mermaidAPI = (record: string, callChainId: number): Promise<{ data: MermaidResponse }> => {
+export const mermaidAPI = (params: MermaidRequest): Promise<{ data: MermaidResponse }> => {
   return request({
     url: '/mermaid',
-    method: 'GET',
-    params: { callChainId: callChainId, record: record },
+    method: 'POST',
+    data: params,
   })
 }
 

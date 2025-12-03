@@ -37,9 +37,7 @@ export interface MethodCall {
 }
 
 export interface MermaidResponse {
-  code: string
-  message: string
-  mermaidCode?: string
+  rootNode: string
 }
 
 export interface MethodDetailResponse {
@@ -89,6 +87,10 @@ export interface RecordRequest {
   projectId: string
   config: string[]
   start: boolean
+}
+export interface MermaidRequest {
+  record: string
+  callChainId: number
 }
 
 export interface ProjectConfig {
@@ -151,12 +153,6 @@ export interface AppState {
   currentProject: ProjectConfig | null
 }
 
-export interface MethodState {
-  methodRecords: MethodRecordResponse[]
-  currentMethodChain: MethodChainResponse | null
-  mermaidCode: string
-  loading: boolean
-}
 
 // Utility Types
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'

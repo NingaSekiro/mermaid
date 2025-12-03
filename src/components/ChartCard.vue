@@ -1,11 +1,7 @@
 <template>
   <div class="chart-card">
     <a-spin :spinning="loading">
-      <MermaidRenderer
-        v-if="mermaidCode"
-        :mermaidCode="mermaidCode"
-        :record="record"
-      />
+      <Sequence v-if="mermaidResponse" :mermaidResponse="mermaidResponse" :record="record" />
       <div v-else class="chart-empty">
         <a-empty :description="emptyText" />
       </div>
@@ -14,11 +10,12 @@
 </template>
 
 <script setup lang="ts">
-import MermaidRenderer from '@/components/MermaidRenderer.vue'
+import type { MermaidResponse } from '@/types/api.types.ts'
+import Sequence from '@/components/Sequence.vue'
 
 defineProps<{
   title: string
-  mermaidCode: string
+  mermaidResponse: MermaidResponse | undefined
   record: string
   loading: boolean
   emptyText?: string
@@ -28,6 +25,7 @@ defineProps<{
 <style scoped>
 .chart-card {
   width: 100%;
+  height: 100%;
 }
 .chart-empty {
   height: 480px;
