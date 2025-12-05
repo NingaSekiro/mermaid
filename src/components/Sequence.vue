@@ -107,13 +107,13 @@ class MindmapNode extends BaseNode {
 
     return {
       backgroundFill: color,
-      backgroundHeight: 24,
-      backgroundWidth: 24,
+      backgroundHeight: 48,
+      backgroundWidth: 48,
       cursor: 'pointer',
       // 蓝色
       fill: '#007bff',
       fontFamily: 'iconfont',
-      fontSize: 16,
+      fontSize: 48,
       text: '\ue6e4',
       textAlign: 'center',
       transform: direction === 'left' ? [['rotate', 90]] : [['rotate', -90]],
@@ -143,14 +143,14 @@ class MindmapNode extends BaseNode {
     const [width, height] = this.getSize(attributes)
     return {
       backgroundFill: color,
-      backgroundHeight: 12,
-      backgroundWidth: 12,
+      backgroundHeight: 24,
+      backgroundWidth: 24,
       cursor: 'pointer',
       fill: '#007bff',
-      fontSize: 8,
+      fontSize: 16,
       text: count.toString(),
       textAlign: 'center',
-      x: direction === 'left' ? -6 : width + 6,
+      x: direction === 'left' ? -8 : width + 8,
       y: height,
     }
   }
@@ -241,9 +241,9 @@ class CollapseExpandTree extends BaseBehavior {
   }
 
   status = 'idle'
-  openMethodDetailDrawer=(event)=>{
+  openMethodDetailDrawer = (event) => {
     const { target } = event
-    const nodeData = graph.getNodeData(target.id);
+    const nodeData = graph.getNodeData(target.id)
     methodDetailDrawer.value.updateDrawerText(nodeData.data.id, props.record)
   }
 
@@ -268,12 +268,12 @@ class CollapseExpandTree extends BaseBehavior {
     this.status = 'busy'
     const { id, collapsed } = event
     const { graph } = this.context
-    if (collapsed){
+    if (collapsed) {
       await graph.collapseElement(id)
-    }
-    else {
+    } else {
       await graph.expandElement(id)
       await graph.layout()
+      await graph.focusElement(id)
     }
     await graph.frontElement(id)
     this.status = 'idle'
@@ -338,16 +338,20 @@ onMounted(() => {
       type: 'mindmap',
       direction: 'LR',
       getHeight: () => 30,
-      getWidth: (node) => getNodeWidth(node.data.name, node.id === props.mermaidResponse.rootNode.id),
+      getWidth: (node) =>
+        getNodeWidth(node.data.name, node.id === props.mermaidResponse.rootNode.id),
       getVGap: () => 6,
       getHGap: () => 60,
       animation: false,
     },
-    behaviors: ['drag-canvas', 'zoom-canvas', 'collapse-expand-tree'],
+    behaviors: [
+      'drag-canvas',
+      'zoom-canvas',
+      'collapse-expand-tree',
+    ],
     animation: false,
   })
   graph.render()
-
 })
 
 watch(
