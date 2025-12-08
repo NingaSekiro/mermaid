@@ -4,7 +4,7 @@
       algorithm: theme.darkAlgorithm,
       token: {
         colorPrimary: '#10b981',
-        colorBgLayout: '#0e0e10',
+        colorBgLayout: '#1f1f1f',
         colorBgContainer: '#1a1a1d',
         borderRadius: 12,
         fontSize: 14,

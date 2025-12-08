@@ -20,7 +20,7 @@ import {
 } from '@antv/g6'
 import { Rect, Text } from '@antv/g'
 
-import { onMounted, ref, watch } from 'vue'
+import { onMounted, ref, toRaw, watch, onBeforeUnmount } from 'vue'
 import MethodDetailDrawer from '@/components/MethodDetailDrawer.vue'
 
 const methodDetailDrawer = ref()
@@ -29,6 +29,7 @@ const props = defineProps({
   record: String,
 })
 let graph
+let resizeObserver
 
 const style = document.createElement('style')
 style.innerHTML = `@import url('${iconfont.css}');`
@@ -293,9 +294,10 @@ const getNodeSide = (nodeData, parentData) => {
 }
 
 onMounted(() => {
+  const root = toRaw(props.mermaidResponse.rootNode)
   graph = new Graph({
     autoFit: 'view',
-    data: treeToGraphData(props.mermaidResponse.rootNode, {
+    data: treeToGraphData(root, {
       getNodeData: (datum, depth) => {
         if (!datum.style) {
           datum.style = {}
@@ -311,7 +313,7 @@ onMounted(() => {
     node: {
       type: 'mindmap',
       style: function (datum) {
-        const isRoot = idOf(datum) === props.mermaidResponse.rootNode.id
+        const isRoot = idOf(datum) === '0'
 
         return {
           labelText: datum.data.name,
@@ -338,20 +340,24 @@ onMounted(() => {
       type: 'mindmap',
       direction: 'LR',
       getHeight: () => 30,
-      getWidth: (node) =>
-        getNodeWidth(node.data.name, node.id === props.mermaidResponse.rootNode.id),
+      getWidth: (node) => getNodeWidth(node.data.name, node.id === '0'),
       getVGap: () => 6,
       getHGap: () => 60,
       animation: false,
     },
-    behaviors: [
-      'drag-canvas',
-      'zoom-canvas',
-      'collapse-expand-tree',
-    ],
+    behaviors: ['drag-canvas', 'zoom-canvas', 'collapse-expand-tree'],
     animation: false,
   })
   graph.render()
+  const el = document.getElementById('container')
+  if (el && 'ResizeObserver' in window) {
+    resizeObserver = new ResizeObserver(() => {
+      if (graph) {
+        graph.resize()
+      }
+    })
+    resizeObserver.observe(el)
+  }
 })
 
 watch(
@@ -362,22 +368,15 @@ watch(
 )
 
 function updateGraphData() {
-  const data = treeToGraphData(props.mermaidResponse.rootNode, {
-    getNodeData: (datum, depth) => {
-      if (!datum.style) {
-        datum.style = {}
-      }
-      datum.style.collapsed = depth >= 3
-      if (!datum.children) {
-        return datum
-      }
-      const { children, ...restDatum } = datum
-      return { ...restDatum, children: children.map((child) => child.id) }
-    },
-  })
+  const root = toRaw(props.mermaidResponse.rootNode)
+  const data = treeToGraphData(root)
   graph.setData(data)
   graph.render()
 }
+
+onBeforeUnmount(() => {
+  if (resizeObserver) resizeObserver.disconnect()
+})
 </script>
 
 <style scoped>
