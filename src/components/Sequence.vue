@@ -1,5 +1,10 @@
 <template>
-  <div id="container"></div>
+  <div id="container">
+    <SearchHighlightControl
+      :root="toRaw(props.mermaidResponse.rootNode)"
+      @highlight="highlightPath"
+    />
+  </div>
   <MethodDetailDrawer ref="methodDetailDrawer"></MethodDetailDrawer>
 </template>
 <script setup>
@@ -20,7 +25,9 @@ import {
 } from '@antv/g6'
 import { Rect, Text } from '@antv/g'
 
-import { onMounted, ref, toRaw, watch, onBeforeUnmount } from 'vue'
+import { onMounted, ref, toRaw, watch, onBeforeUnmount, defineExpose } from 'vue'
+import { buildIndex, bestMatchPathIds } from '@/lib/search/indexer'
+import SearchHighlightControl from '@/components/SearchHighlightControl.vue'
 import MethodDetailDrawer from '@/components/MethodDetailDrawer.vue'
 
 const methodDetailDrawer = ref()
@@ -30,6 +37,8 @@ const props = defineProps({
 })
 let graph
 let resizeObserver
+let lastHighlighted = []
+let index = []
 
 const style = document.createElement('style')
 style.innerHTML = `@import url('${iconfont.css}');`
@@ -295,6 +304,7 @@ const getNodeSide = (nodeData, parentData) => {
 
 onMounted(() => {
   const root = toRaw(props.mermaidResponse.rootNode)
+  index = buildIndex(root)
   graph = new Graph({
     autoFit: 'view',
     data: treeToGraphData(root, {
@@ -372,7 +382,58 @@ function updateGraphData() {
   const data = treeToGraphData(root)
   graph.setData(data)
   graph.render()
+  index = buildIndex(root)
 }
+
+async function highlightPath(pathIds) {
+  const reset = lastHighlighted
+  if (reset.length) {
+    graph.updateNodeData(
+      reset.map((id) => ({
+        id,
+        style: { color: undefined, labelFill: '#007bff', labelFontWeight: 400 },
+      })),
+    )
+  }
+  const normalIds = pathIds.slice(0, -1)
+  const targetId = pathIds[pathIds.length - 1]
+  for (const id of normalIds) {
+    try {
+      // 先确保路径上的节点被展开，避免未渲染导致 focus 报错
+      // expandElement 是异步的
+      // 若节点已展开，G6 会忽略该操作
+      // @ts-ignore
+      await graph.expandElement(id)
+    } catch (e) {}
+  }
+  const highlightIds = pathIds
+  const midIds = pathIds.slice(0, -1)
+  graph.updateNodeData(
+    midIds.map((id) => ({
+      id,
+      style: { color: '#faad14', labelFill: '#faad14', labelFontWeight: 600 },
+    })),
+  )
+  graph.updateNodeData([
+    { id: targetId, style: { color: '#ff4d4f', labelFill: '#ff4d4f', labelFontWeight: 700 } },
+  ])
+  lastHighlighted = highlightIds
+  try {
+    // 重新布局后再聚焦，保证渲染边界存在
+    // @ts-ignore
+    await graph.layout()
+    graph.frontElement(targetId)
+    // @ts-ignore
+    await graph.focusElement(targetId)
+  } catch (e) {}
+}
+
+async function search(keyword) {
+  const path = bestMatchPathIds(index, keyword)
+  if (path && path.length) await highlightPath(path)
+}
+
+defineExpose({ search })
 
 onBeforeUnmount(() => {
   if (resizeObserver) resizeObserver.disconnect()
