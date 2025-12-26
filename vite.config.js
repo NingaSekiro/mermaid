@@ -6,12 +6,18 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 import Components from 'unplugin-vue-components/vite'
 import { AntDesignVueResolver } from 'unplugin-vue-components/resolvers'
 import viteCompression from 'vite-plugin-compression'
+import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
     vue(),
-    Components({ resolvers: [AntDesignVueResolver({ importStyle: false })] }),
+    AutoImport({
+      resolvers: [ElementPlusResolver()],
+    }),
+    Components({
+      resolvers: [AntDesignVueResolver({ importStyle: false }), ElementPlusResolver()],
+    }),
     vueDevTools(),
     viteCompression({ algorithm: 'gzip', ext: '.gz', threshold: 10240 }),
   ],
