@@ -6,13 +6,19 @@
           <span class="code-text">{{ methodStore.methodDetail.method || '-' }}</span>
         </a-descriptions-item>
         <a-descriptions-item label="参数">
-          <pre class="code-block">{{ methodStore.methodDetail.args || '-' }}</pre>
+          <span class="mono" style="white-space: pre-line">{{
+            methodStore.methodDetail.args || '-'
+          }}</span>
         </a-descriptions-item>
         <a-descriptions-item label="返回值">
-          <pre class="code-block">{{ methodStore.methodDetail.returnValue || '-' }}</pre>
+          <span class="mono" style="white-space: pre-line">{{
+            methodStore.methodDetail.returnValue || '-'
+          }}</span>
         </a-descriptions-item>
         <a-descriptions-item label="目标对象">
-          <span class="mono">{{ methodStore.methodDetail.target || '-' }}</span>
+          <span class="mono" style="white-space: pre-line">{{
+            methodStore.methodDetail.target || '-'
+          }}</span>
         </a-descriptions-item>
         <a-descriptions-item label="时间戳">
           <span class="mono">{{ methodStore.methodDetail.timestamp || '-' }}</span>
@@ -46,7 +52,7 @@ const updateDrawerText = async (id: string, record: string): Promise<void> => {
   }
 }
 defineExpose({
-  updateDrawerText
+  updateDrawerText,
 })
 </script>
 
