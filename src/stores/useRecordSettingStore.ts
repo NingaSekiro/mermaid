@@ -5,37 +5,40 @@ import { getInitConfig } from '@/apis/method'
 export const useRecordSettingStore = defineStore('recordSetting', () => {
   const packageNames = ref<string[]>([])
   const checkedList = ref<string[]>([])
-  const checkAll = ref<boolean>(true)
-  const indeterminate = ref<boolean>(false)
   const recordDisabled = ref<boolean>(false)
   const projectId = ref<string>('')
   const customPackages = ref<string[]>([])
   const customCheckedList = ref<string[]>([])
+  const isInitialized = ref<boolean>(false)
 
-  const calcState = (): void => {
-    indeterminate.value = !!checkedList.value.length && checkedList.value.length < packageNames.value.length
-    checkAll.value = checkedList.value.length === packageNames.value.length
-  }
+  const checkAll = computed<boolean>(() => {
+    return checkedList.value.length === packageNames.value.length
+  })
+
+  const indeterminate = computed<boolean>(() => {
+    return !!checkedList.value.length && checkedList.value.length < packageNames.value.length
+  })
 
   const init = async (projectId: string): Promise<void> => {
+    if (isInitialized.value) {
+      return
+    }
+
     projectIdRef(projectId)
     const res = await getInitConfig(projectId)
     packageNames.value = res.data.packageNames || []
     checkedList.value = res.data.packageNames || []
     recordDisabled.value = !res.data.status
-    calcState()
     loadCustom()
+    isInitialized.value = true
   }
 
   const setCheckedList = (list: string[]): void => {
     checkedList.value = list
-    calcState()
   }
 
   const setCheckAll = (checked: boolean): void => {
     checkedList.value = checked ? packageNames.value.slice() : []
-    indeterminate.value = false
-    calcState()
   }
 
   const effectiveCheckedList = computed<string[]>(() => {

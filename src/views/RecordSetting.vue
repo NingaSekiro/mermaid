@@ -1,16 +1,5 @@
 <template>
-  <RecordControl
-    :checkAll="settingStore.checkAll"
-    :indeterminate="settingStore.indeterminate"
-    :checkedList="settingStore.checkedList"
-    :packageNames="settingStore.packageNames"
-    :recording="false"
-    :recordDisabled="settingStore.recordDisabled"
-    :showSettings="true"
-    :showSwitch="false"
-    @checkAllChange="onCheckAllChange"
-    @update:checkedList="settingStore.setCheckedList($event)"
-  />
+  <RecordSettingControl />
   <a-card
     :bordered="false"
     title="自定义package"
@@ -22,19 +11,31 @@
     }"
   >
     <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap">
-      <a-input v-model:value="customInput" placeholder="输入包名，如 com.example" style="width: 320px" />
+      <a-input
+        v-model:value="customInput"
+        placeholder="输入包名，如 com.example"
+        style="width: 320px"
+      />
       <a-button type="primary" @click="addCustom" :disabled="!customInput.trim()">添加</a-button>
       <a-tooltip v-if="errMsg" :title="errMsg">
         <a-tag color="error">{{ errMsg }}</a-tag>
       </a-tooltip>
     </div>
     <div style="margin-top: 12px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap">
-      <div v-for="p in settingStore.customPackages" :key="p" style="display: flex; gap: 8px; align-items: center">
+      <div
+        v-for="p in settingStore.customPackages"
+        :key="p"
+        style="display: flex; gap: 8px; align-items: center"
+      >
         <a-checkbox
           :checked="settingStore.customCheckedList.includes(p)"
           @change="(e: any) => toggleCustom(p, e)"
-        >{{ p }}</a-checkbox>
-        <CloseOutlined style="cursor: pointer; color: rgba(255,255,255,0.65)" @click="removeCustom(p)" />
+          >{{ p }}</a-checkbox
+        >
+        <CloseOutlined
+          style="cursor: pointer; color: rgba(255, 255, 255, 0.65)"
+          @click="removeCustom(p)"
+        />
       </div>
     </div>
   </a-card>
@@ -42,7 +43,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { CloseOutlined } from '@ant-design/icons-vue'
-import RecordControl from '@/components/RecordControl.vue'
+import RecordSettingControl from '@/components/RecordSettingControl.vue'
 import { useRecordSettingStore } from '@/stores/useRecordSettingStore'
 import { useMethodStore } from '@/stores/useMethodStore'
 
@@ -64,11 +65,6 @@ onMounted(async () => {
     await settingStore.init(methodStore.projectId || '')
   }
 })
-
-const onCheckAllChange = (e: Event): void => {
-  const target = e.target as HTMLInputElement
-  settingStore.setCheckAll(target.checked)
-}
 
 const addCustom = (): void => {
   const name = customInput.value.trim()
@@ -98,7 +94,4 @@ const toggleCustom = (name: string, e: any): void => {
 }
 </script>
 
-
-<style scoped>
-
-</style>
+<style scoped></style>
