@@ -19,16 +19,15 @@ export const useRecordSettingStore = defineStore('recordSetting', () => {
     return !!checkedList.value.length && checkedList.value.length < packageNames.value.length
   })
 
-  const init = async (projectId: string): Promise<void> => {
+  const init = async (projectIdParam: string): Promise<void> => {
+    const res = await getInitConfig(projectIdParam)
+    recordDisabled.value = !res.data.status
     if (isInitialized.value) {
       return
     }
-
-    projectIdRef(projectId)
-    const res = await getInitConfig(projectId)
+    projectId.value = projectIdParam
     packageNames.value = res.data.packageNames || []
     checkedList.value = res.data.packageNames || []
-    recordDisabled.value = !res.data.status
     loadCustom()
     isInitialized.value = true
   }
@@ -46,10 +45,6 @@ export const useRecordSettingStore = defineStore('recordSetting', () => {
     for (const c of customCheckedList.value) set.add(c)
     return Array.from(set)
   })
-
-  const projectIdRef = (pid: string): void => {
-    projectId.value = pid
-  }
 
   const loadCustom = (): void => {
     try {
